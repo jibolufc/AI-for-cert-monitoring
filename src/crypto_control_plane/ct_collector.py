@@ -187,7 +187,7 @@ class CertificateTransparencyCollector:
             )
         )
         return {
-            "schema_version": "1.2",
+            "schema_version": "1.3",
             "event_id": event_id,
             "event_type": "certificate.observed",
             "observed_at": entry["observed_at"],
@@ -206,6 +206,7 @@ class CertificateTransparencyCollector:
                 "source_record_id": source_record_id,
                 "payload_sha256": payload_sha256,
                 "verification_state": "unverified",
+                "evidence_level": "simulated",
                 "cursor": str(entry["index"]),
             },
         }

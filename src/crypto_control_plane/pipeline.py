@@ -57,7 +57,7 @@ class CertificateMonitoringPipeline:
             )
         )
         alert = {
-            "schema_version": "1.1",
+            "schema_version": "1.2",
             "alert_id": alert_id,
             "rule_id": "CERT-001",
             "event_id": event.event_id,

@@ -38,7 +38,7 @@ class PqcInventoryService:
         record_id = str(uuid5(NAMESPACE_URL, f"crypto-control-plane:inventory:{event.event_id}:x509-public-key"))
         context = event.context
         return {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "record_id": record_id,
             "observation_id": event.event_id,
             "observed_at": event.observed_at,
@@ -65,13 +65,17 @@ class PqcInventoryService:
                 "fingerprint_sha256": event.fingerprint_sha256,
                 "subject": event.subject,
                 "issuer": event.issuer,
+                "not_before": event.not_before,
+                "not_after": event.not_after,
                 "key_usage": list(event.key_usage),
                 "extended_key_usage": list(event.extended_key_usage),
                 "signature_algorithm": event.certificate_signature,
             },
+            "transport_observation": event.transport,
             "dependencies": [],
             "supplier": None,
             "evidence_confidence": event.provenance["verification_state"],
+            "evidence_level": event.provenance["evidence_level"],
             "source_evidence": event.evidence,
             "event_provenance": event.provenance,
             "coverage": {
@@ -156,11 +160,12 @@ class PqcInventoryService:
         priority = _priority(exposure, record, missing)
         assessment_id = str(uuid5(NAMESPACE_URL, f"crypto-control-plane:assessment:{record['record_id']}:{self.method_version}"))
         return {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "assessment_id": assessment_id,
             "record_id": record["record_id"],
             "assessed_at": record["observed_at"],
             "method_version": self.method_version,
+            "evidence_level": record["evidence_level"],
             "exposure_status": exposure,
             "migration_priority": priority,
             "findings": findings,

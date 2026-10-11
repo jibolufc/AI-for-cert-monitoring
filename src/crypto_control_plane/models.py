@@ -16,10 +16,14 @@ from .validation import (
 
 EVENT_TYPES = {"certificate.issued", "certificate.observed"}
 SOURCE_TYPES = {
-    "fixture", "ct", "acme", "tls", "aws-acm", "azure-key-vault",
+    "fixture", "file", "ct", "acme", "tls", "aws-acm", "azure-key-vault",
     "gcp-certificate-manager", "cert-manager", "vault", "adcs",
 }
 ENVIRONMENTS = {"production", "staging", "development", "unknown"}
+EVIDENCE_LEVELS = {
+    "simulated", "generated", "public-observation", "sanitised-capture",
+    "authenticated-production", "independently-verified",
+}
 ALGORITHM_FAMILIES = {
     "rsa", "elliptic-curve", "finite-field-dh", "ml-kem", "ml-dsa",
     "slh-dsa", "hybrid", "other", "unknown",
@@ -58,6 +62,7 @@ class CertificateEvent:
     context: dict[str, Any]
     evidence: dict[str, Any]
     provenance: dict[str, Any]
+    transport: dict[str, Any] | None
 
     @classmethod
     def from_dict(cls, payload: Any) -> "CertificateEvent":
@@ -65,11 +70,11 @@ class CertificateEvent:
         require_exact_keys(
             root,
             {"schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "cryptography", "context", "evidence", "provenance"},
-            set(),
+            {"transport"},
             "event",
         )
-        if root["schema_version"] != "1.2":
-            raise ValidationError("event.schema_version must be '1.2'")
+        if root["schema_version"] != "1.3":
+            raise ValidationError("event.schema_version must be '1.3'")
         event_type = require_string(root["event_type"], "event.event_type", maximum=64)
         if event_type not in EVENT_TYPES:
             raise ValidationError("event.event_type is unsupported")
@@ -168,7 +173,7 @@ class CertificateEvent:
         provenance = require_mapping(root["provenance"], "event.provenance")
         require_exact_keys(
             provenance,
-            {"collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "cursor"},
+            {"collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "evidence_level", "cursor"},
             set(),
             "event.provenance",
         )
@@ -180,11 +185,45 @@ class CertificateEvent:
             raise ValidationError("event.provenance.payload_sha256 must contain 64 hexadecimal characters")
         if provenance["verification_state"] not in {"verified", "unverified", "failed"}:
             raise ValidationError("event.provenance.verification_state is unsupported")
+        if provenance["evidence_level"] not in EVIDENCE_LEVELS:
+            raise ValidationError("event.provenance.evidence_level is unsupported")
         require_string(provenance["cursor"], "event.provenance.cursor", maximum=256)
+        _validate_evidence_claim(
+            source_type=source_type,
+            collector_id=provenance["collector_id"],
+            evidence_level=provenance["evidence_level"],
+        )
+
+        transport = None
+        if "transport" in root:
+            transport = require_mapping(root["transport"], "event.transport")
+            require_exact_keys(
+                transport,
+                {
+                    "protocol", "tls_version", "cipher_suite", "peer_host",
+                    "peer_port", "peer_verification", "negotiated_key_establishment",
+                },
+                set(),
+                "event.transport",
+            )
+            if transport["protocol"] != "tls":
+                raise ValidationError("event.transport.protocol must be 'tls'")
+            for key in ("tls_version", "cipher_suite", "peer_host", "peer_verification"):
+                require_string(transport[key], f"event.transport.{key}", maximum=256)
+            peer_port = transport["peer_port"]
+            if not isinstance(peer_port, int) or isinstance(peer_port, bool) or not 1 <= peer_port <= 65535:
+                raise ValidationError("event.transport.peer_port must be an integer from 1 to 65535")
+            negotiated = transport["negotiated_key_establishment"]
+            if negotiated is not None:
+                require_string(
+                    negotiated,
+                    "event.transport.negotiated_key_establishment",
+                    maximum=256,
+                )
 
         return cls(
             raw=dict(root),
-            schema_version="1.2",
+            schema_version="1.3",
             event_id=require_uuid(root["event_id"], "event.event_id"),
             event_type=event_type,
             observed_at=require_timestamp(root["observed_at"], "event.observed_at"),
@@ -196,7 +235,7 @@ class CertificateEvent:
             # critical subjectAltName extension, so empty is valid telemetry.
             subject=require_string(certificate["subject"], "event.certificate.subject", minimum=0),
             issuer=require_string(certificate["issuer"], "event.certificate.issuer"),
-            san_dns_names=tuple(require_string_list(certificate["san_dns_names"], "event.certificate.san_dns_names", minimum=1)),
+            san_dns_names=tuple(require_string_list(certificate["san_dns_names"], "event.certificate.san_dns_names")),
             not_before=not_before,
             not_after=not_after,
             public_key=public_key,
@@ -207,6 +246,29 @@ class CertificateEvent:
             context=dict(context),
             evidence=dict(evidence),
             provenance=dict(provenance),
+            transport=None if transport is None else dict(transport),
+        )
+
+
+def _validate_evidence_claim(
+    *, source_type: str, collector_id: str, evidence_level: str
+) -> None:
+    collector_levels = {
+        "fixture-generator": {"simulated"},
+        "ct-decoded-fixture": {"simulated"},
+        "x509-file-parser": {"generated", "sanitised-capture"},
+        "tls-loopback-lab": {"generated"},
+    }
+    if source_type == "fixture" and evidence_level != "simulated":
+        raise ValidationError("fixture sources may only claim simulated evidence")
+    allowed = collector_levels.get(collector_id)
+    if allowed is not None and evidence_level not in allowed:
+        raise ValidationError(
+            f"collector {collector_id!r} may not claim {evidence_level!r} evidence"
+        )
+    if evidence_level in {"authenticated-production", "independently-verified"}:
+        raise ValidationError(
+            f"{evidence_level} evidence is reserved until an authenticated collector trust registry exists"
         )
 
 

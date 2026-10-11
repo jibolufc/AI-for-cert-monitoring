@@ -4,9 +4,9 @@
   "title": "Evidence-backed cryptographic inventory record",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "record_id", "observation_id", "observed_at", "asset", "cryptographic_use", "certificate", "dependencies", "supplier", "evidence_confidence", "source_evidence", "event_provenance", "coverage"],
+  "required": ["schema_version", "record_id", "observation_id", "observed_at", "asset", "cryptographic_use", "certificate", "transport_observation", "dependencies", "supplier", "evidence_confidence", "evidence_level", "source_evidence", "event_provenance", "coverage"],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"const": "1.1"},
     "record_id": {"type": "string", "format": "uuid"},
     "observation_id": {"type": "string", "format": "uuid"},
     "observed_at": {"type": "string", "format": "date-time"},
@@ -41,19 +41,40 @@
     },
     "certificate": {
       "type": "object", "additionalProperties": false,
-      "required": ["fingerprint_sha256", "subject", "issuer", "key_usage", "extended_key_usage", "signature_algorithm"],
+      "required": ["fingerprint_sha256", "subject", "issuer", "not_before", "not_after", "key_usage", "extended_key_usage", "signature_algorithm"],
       "properties": {
         "fingerprint_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
         "subject": {"type": "string", "maxLength": 2048},
         "issuer": {"type": "string", "minLength": 1, "maxLength": 2048},
+        "not_before": {"type": "string", "format": "date-time"},
+        "not_after": {"type": "string", "format": "date-time"},
         "key_usage": {"type": "array", "items": {"type": "string"}},
         "extended_key_usage": {"type": "array", "items": {"type": "string"}},
         "signature_algorithm": {"$ref": "#/$defs/signatureAlgorithm"}
       }
     },
+    "transport_observation": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["protocol", "tls_version", "cipher_suite", "peer_host", "peer_port", "peer_verification", "negotiated_key_establishment"],
+          "properties": {
+            "protocol": {"const": "tls"},
+            "tls_version": {"type": "string", "minLength": 1, "maxLength": 64},
+            "cipher_suite": {"type": "string", "minLength": 1, "maxLength": 256},
+            "peer_host": {"type": "string", "minLength": 1, "maxLength": 256},
+            "peer_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "peer_verification": {"enum": ["unverified", "verified"]},
+            "negotiated_key_establishment": {"type": ["string", "null"], "minLength": 1, "maxLength": 256}
+          }
+        }
+      ]
+    },
     "dependencies": {"type": "array", "maxItems": 10000, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
     "supplier": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
     "evidence_confidence": {"enum": ["verified", "unverified", "failed"]},
+    "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
     "source_evidence": {"$ref": "#/$defs/evidence"},
     "event_provenance": {"$ref": "#/$defs/provenance"},
     "coverage": {
@@ -95,13 +116,14 @@
     },
     "provenance": {
       "type": "object", "additionalProperties": false,
-      "required": ["collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "cursor"],
+      "required": ["collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "evidence_level", "cursor"],
       "properties": {
         "collector_id": {"type": "string", "minLength": 1, "maxLength": 128},
         "collector_version": {"type": "string", "minLength": 1, "maxLength": 32},
         "source_record_id": {"type": "string", "minLength": 1, "maxLength": 512},
         "payload_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
         "verification_state": {"enum": ["verified", "unverified", "failed"]},
+        "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
         "cursor": {"type": "string", "minLength": 1, "maxLength": 256}
       }
     }

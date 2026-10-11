@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "alert_id", "rule_id", "event_id", "created_at", "severity", "risk_score", "title", "evidence", "policy", "explanation", "explanation_authority", "playbook"],
   "properties": {
-    "schema_version": {"const": "1.1"},
+    "schema_version": {"const": "1.2"},
     "alert_id": {"type": "string", "format": "uuid"},
     "rule_id": {"const": "CERT-001"},
     "event_id": {"type": "string", "format": "uuid"},
@@ -40,13 +40,14 @@
         "event_provenance": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "cursor"],
+          "required": ["collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "evidence_level", "cursor"],
           "properties": {
             "collector_id": {"type": "string", "minLength": 1, "maxLength": 128},
             "collector_version": {"type": "string", "minLength": 1, "maxLength": 32},
             "source_record_id": {"type": "string", "minLength": 1, "maxLength": 512},
             "payload_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
             "verification_state": {"enum": ["verified", "unverified", "failed"]},
+            "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
             "cursor": {"type": "string", "minLength": 1, "maxLength": 256}
           }
         }

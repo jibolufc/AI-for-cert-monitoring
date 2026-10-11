@@ -7,7 +7,7 @@ not its final product boundary. It is deliberately **not** a certificate
 authority, key-management service, migration executor, or autonomous remediation
 system.
 
-The first three milestones are executable end to end:
+The first four milestones are executable end to end:
 
 ```text
 certificate event
@@ -24,12 +24,18 @@ decoded CT fixture pages
   -> SQLite evidence/idempotency/checkpoint state
   -> canonical event pipeline
 
-canonical certificate event v1.2
+canonical certificate event v1.3
   -> cryptographic algorithm/function evidence
   -> inventory record with explicit coverage limits
   -> deterministic PQC exposure assessment
   -> missing-context and verification requirements
   -> atomic SQLite evidence + inventory persistence
+
+generated RSA/ECDSA certificate or loopback TLS peer
+  -> real X.509 parsing
+  -> evidence-maturity enforcement
+  -> certificate + transport observations kept separate
+  -> inventory and PQC assessment bundle
 ```
 
 ## Trust boundary
@@ -50,6 +56,8 @@ canonical certificate event v1.2
   implementation, trust-chain, peer, and fallback verification.
 - Certificate evidence does not prove which key-establishment mechanism was
   negotiated and does not represent complete enterprise cryptographic coverage.
+- The Milestone 4 TLS probe accepts loopback IP literals only. It is a controlled
+  lab component, not an Internet, enterprise-network, or vulnerability scanner.
 
 ## Quick start
 
@@ -75,6 +83,12 @@ python3 -m venv .venv
 .venv/bin/python -m crypto_control_plane.inventory_cli \
   --event examples/events/known-domain-issued.json \
   --output build/pqc-inventory-assessment.json
+
+# Parse a generated or explicitly sanitised certificate file.
+.venv/bin/python -m crypto_control_plane.discovery_lab_cli \
+  --certificate /path/to/test-certificate.pem \
+  --evidence-level generated \
+  --output build/x509-discovery-bundle.json
 ```
 
 The example produces a `CERT-001` alert because `lookalike-example.net` is not
@@ -93,21 +107,40 @@ covered by the configured organization DNS namespace. Use
 - `tests/`: unit and integration-style vertical-slice tests
 - `examples/`: safe local fixtures and policy
 
-## Milestone 3: PQC inventory foundation
+## Evidence maturity
 
-All milestones remain a local reference implementation. Milestone 3 adds:
+Every event, inventory record, and assessment carries one evidence level:
 
-1. Certificate event contract v1.2 with public-key, signature, key-usage, and
-   optional business-context evidence.
-2. A separately versioned cryptographic inventory record.
-3. Explainable PQC exposure classifications: `quantum-vulnerable`,
-   `candidate-quantum-resistant`, `hybrid-unverified`, or `unknown`.
-4. Migration priority that remains `needs-context` or `needs-evidence` when the
-   required inputs are absent.
-5. Explicit certificate-only coverage limitations on every inventory record.
-6. Atomic persistence of the source outcome, inventory record, and assessment.
-7. Tests for classical, unknown, candidate-PQC, hybrid, replay, and fail-closed
-   behavior.
+| Level | Meaning |
+|---|---|
+| `simulated` | Hand-authored scenario; logic demonstration only |
+| `generated` | Locally generated cryptographic artifact |
+| `public-observation` | Publicly observable evidence with limited ownership context |
+| `sanitised-capture` | Explicitly sanitised sample from a controlled environment |
+| `authenticated-production` | Authenticated, authorised production collector evidence |
+| `independently-verified` | Evidence confirmed through an independent source or control |
+
+Known local collectors have an allowlist of evidence levels. Fixtures cannot be
+relabeled as production. The high-assurance levels are reserved and rejected at
+runtime until an authenticated collector trust registry exists. The current
+repository produces only `simulated` and `generated` evidence.
+
+## Milestone 4: controlled discovery lab
+
+All milestones remain a local reference implementation. Milestone 4 adds:
+
+1. A generated RSA/ECDSA X.509 estate with valid, expired, future-validity,
+   CA, end-entity, and no-SAN scenarios.
+2. Real PEM/DER parsing for fingerprints, serials, identities, validity,
+   public-key algorithms, signature algorithms, key usages, and EKUs.
+3. An evidence-maturity contract propagated through events, inventory records,
+   assessments, alerts, and durable state.
+4. A bounded loopback-only TLS probe that records TLS version and cipher suite
+   but leaves negotiated key establishment `null` when it is not evidenced.
+5. Golden scenario expectations and adversarial tests for malformed artifacts,
+   unsupported claims, non-loopback targets, and fixture evidence escalation.
+6. A file-based lab CLI for generated or sanitised certificates.
+7. PyCA `cryptography` pinned at 50.0.2 for Python 3.11 through 3.13.
 
 The CT fixture contract is intentionally provider-neutral and is **not** an RFC
 6962 or RFC 9162 wire response. A live adapter must separately implement and
@@ -116,18 +149,15 @@ backoff, log-list trust, parsing, and proof verification as applicable.
 
 Recommended next gates are:
 
-1. Select one real read-only discovery source: live X.509/TLS parsing, private
-   PKI, cloud certificate/KMS inventory, or an enterprise certificate manager.
-2. Integrate authoritative asset, service, owner, data-classification, and
-   protection-lifetime context.
-3. Add dependency edges and evidence-conflict handling across multiple sources.
-4. Measure discovery coverage instead of treating unobserved assets as safe.
-5. Authenticate collector-to-control-plane provenance rather than relying only
-   on a digest.
-6. Add a production outbox/transport with delivery, redaction, tenancy,
-   retention, dead-lettering, and metrics.
-7. Add migration waves, target states, exceptions, approvals, and verification
-   only after the evidence and policy authorities are defined.
+1. Build a fictional enterprise catalogue with services, owners, data lifetime,
+   suppliers, dependencies, current state, and target state.
+2. Add migration waves, blockers, exceptions, approval gates, and verification
+   criteria against the generated discovery corpus.
+3. Add coverage accounting that distinguishes tested, observed, unknown, and
+   out-of-scope assets.
+4. Design an offline customer evidence bundle and sanitisation workflow.
+5. Select an authorised read-only pilot source only when access becomes
+   available; do not represent lab results as production coverage.
 
 Do not add orchestration privileges until policy, approval, separation of
 duties, audit, rollback, and environment-specific authorization are designed

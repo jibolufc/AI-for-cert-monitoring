@@ -4,15 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crypto-control-plane"
-version = "0.3.0"
+version = "0.4.0"
 description = "Evidence-backed cryptographic discovery and PQC migration control-plane reference implementation"
 requires-python = ">=3.11"
-dependencies = ["jsonschema[format-nongpl]==4.26.0"]
+dependencies = [
+  "cryptography==50.0.2",
+  "jsonschema[format-nongpl]==4.26.0",
+]
 
 [project.scripts]
 crypto-control-plane = "crypto_control_plane.cli:main"
 crypto-control-plane-ct-fixture = "crypto_control_plane.ct_cli:main"
 crypto-control-plane-inventory = "crypto_control_plane.inventory_cli:main"
+crypto-control-plane-x509-lab = "crypto_control_plane.discovery_lab_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

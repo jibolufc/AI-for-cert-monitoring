@@ -40,7 +40,15 @@ class SchemaValidationTests(unittest.TestCase):
         event = json.loads(
             (ROOT / "examples" / "events" / "known-domain-issued.json").read_text()
         )
-        event["schema_version"] = "1.1"
+        event["schema_version"] = "1.2"
+        with self.assertRaises(ValidationError):
+            self.schemas.validate("certificate-event", event)
+
+    def test_evidence_level_is_required(self):
+        event = json.loads(
+            (ROOT / "examples" / "events" / "known-domain-issued.json").read_text()
+        )
+        del event["provenance"]["evidence_level"]
         with self.assertRaises(ValidationError):
             self.schemas.validate("certificate-event", event)
 

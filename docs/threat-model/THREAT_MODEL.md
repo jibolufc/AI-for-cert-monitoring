@@ -1,4 +1,4 @@
-# Threat model: Milestones 1 to 3
+# Threat model: Milestones 1 to 4
 
 ## Assets
 
@@ -10,6 +10,8 @@
 - Asset ownership, business criticality, classification, and protection lifetime
 - Certificate metadata that may expose internal names or infrastructure
 - Future credentials and cryptographic workflow authority (not present today)
+- Evidence-maturity labels and the boundary between lab and production claims
+- Local TLS target selection and parsed certificate artifacts
 
 ## Trust boundaries
 
@@ -59,6 +61,11 @@ audit record.
 | Business-context poisoning | Incorrect migration order | Evidence fields remain separate from deterministic classification | Authoritative CMDB/owner sources, change approval, conflict handling |
 | PQC or hybrid label treated as deployment proof | Premature completion claim | Status is `candidate-quantum-resistant` or `hybrid-unverified`, never safe/compliant | Protocol interoperability, chain, implementation, and relying-party verification |
 | Sensitive inventory disclosure | Attacker gains infrastructure and dependency intelligence | Local-only reference storage | Encryption, tenant isolation, field-level authorization, audit, retention controls |
+| Fixture promoted to production evidence | Test result presented as customer assurance | Known collectors have allowed evidence levels; fixture sources are simulation-only | Authenticated collector identity and signed evidence envelopes |
+| Local TLS probe used for network scanning | Unauthorised access or SSRF-style reachability | IP literals only; loopback addresses only; bounded timeout; no redirect or credential support | Separate reviewed production collector with explicit scope and egress policy |
+| Certificate parser resource abuse | Memory/CPU exhaustion or parser exploitation | One-megabyte input bound, pinned parser dependency, malformed input fails closed | Sandboxed parser service, quotas, dependency monitoring |
+| TLS cipher label used as KEM proof | False conclusion about key establishment | Negotiated key establishment is explicitly `null` unless directly evidenced | Protocol-specific telemetry and independent handshake verification |
+| Synthetic private key leakage | Lab key reused or mistaken for production material | Factory returns ephemeral, unencrypted keys only for local tests; artifacts labelled generated | Ephemeral storage, restrictive file mode, automated cleanup, never import into production stores |
 
 ## Security invariants
 
@@ -76,6 +83,12 @@ audit record.
 10. Certificate evidence does not prove negotiated key establishment or complete
     enterprise cryptographic coverage.
 11. Observation, inventory record, and PQC assessment are committed atomically.
+12. Simulation and generated evidence cannot claim authenticated-production or
+    independently-verified status; both high-assurance levels are runtime-
+    disabled until an authenticated collector trust registry exists.
+13. The lab TLS probe cannot connect to a non-loopback target.
+14. Cipher-suite and certificate observations do not invent negotiated
+    key-establishment evidence.
 
 ## Out of scope
 
@@ -83,4 +96,5 @@ Production authentication/authorization, multi-tenancy, service availability,
 live X.509 parsing, CA validation, CT wire parsing/proof verification, source
 authentication, distributed event delivery, transactional SIEM outbox,
 production SIEM authentication, authoritative CMDB enrichment, dependency-graph
-resolution, non-certificate discovery, and remediation/orchestration.
+resolution, Internet or enterprise-network scanning, authenticated production
+discovery, non-certificate discovery, and remediation/orchestration.

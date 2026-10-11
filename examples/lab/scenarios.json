@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "evidence_level": "generated",
+  "scenarios": [
+    {
+      "name": "rsa-server-valid",
+      "key_family": "rsa",
+      "rsa_key_size": 2048,
+      "dns_names": ["rsa.lab.example"],
+      "validity": "valid",
+      "is_ca": false,
+      "expected_public_key_family": "rsa",
+      "expected_key_size_bits": 2048,
+      "expected_exposure": "quantum-vulnerable"
+    },
+    {
+      "name": "ecdsa-server-valid",
+      "key_family": "elliptic-curve",
+      "ec_curve": "P-256",
+      "dns_names": ["ecdsa.lab.example"],
+      "validity": "valid",
+      "is_ca": false,
+      "expected_public_key_family": "elliptic-curve",
+      "expected_curve": "secp256r1",
+      "expected_exposure": "quantum-vulnerable"
+    },
+    {
+      "name": "rsa-server-expired",
+      "key_family": "rsa",
+      "rsa_key_size": 3072,
+      "dns_names": ["expired.lab.example"],
+      "validity": "expired",
+      "is_ca": false,
+      "expected_public_key_family": "rsa",
+      "expected_key_size_bits": 3072,
+      "expected_exposure": "quantum-vulnerable"
+    },
+    {
+      "name": "ecdsa-server-not-yet-valid",
+      "key_family": "elliptic-curve",
+      "ec_curve": "P-384",
+      "dns_names": ["future.lab.example"],
+      "validity": "not-yet-valid",
+      "is_ca": false,
+      "expected_public_key_family": "elliptic-curve",
+      "expected_curve": "secp384r1",
+      "expected_exposure": "quantum-vulnerable"
+    },
+    {
+      "name": "rsa-ca-no-san",
+      "key_family": "rsa",
+      "rsa_key_size": 4096,
+      "dns_names": [],
+      "validity": "valid",
+      "is_ca": true,
+      "expected_public_key_family": "rsa",
+      "expected_key_size_bits": 4096,
+      "expected_exposure": "quantum-vulnerable"
+    }
+  ]
+}
