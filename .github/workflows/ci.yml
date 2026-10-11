@@ -37,3 +37,8 @@ jobs:
             --policy examples/policy.json \
             --state "${RUNNER_TEMP}/ct-state.sqlite" \
             --output "${RUNNER_TEMP}/alerts.jsonl"
+      - name: Exercise PQC inventory CLI
+        run: |
+          python -m crypto_control_plane.inventory_cli \
+            --event examples/events/known-domain-issued.json \
+            --output "${RUNNER_TEMP}/pqc-inventory-assessment.json"

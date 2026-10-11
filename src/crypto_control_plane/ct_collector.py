@@ -9,6 +9,8 @@ from typing import Any, Protocol
 from uuid import NAMESPACE_URL, uuid5
 
 from .errors import ValidationError
+from .inventory import PqcInventoryService
+from .models import CertificateEvent
 from .pipeline import CertificateMonitoringPipeline
 from .schema_validation import SchemaRegistry
 from .state import CollectorState
@@ -74,7 +76,7 @@ class CertificateTransparencyCollector:
     """Converts decoded CT observations into canonical events and alerts."""
 
     collector_id = "ct-decoded-fixture"
-    collector_version = "0.2.0"
+    collector_version = "0.3.0"
 
     def __init__(
         self,
@@ -92,6 +94,7 @@ class CertificateTransparencyCollector:
         self.schemas = schemas
         self.maximum_pages = maximum_pages
         self.maximum_entry_bytes = maximum_entry_bytes
+        self.inventory = PqcInventoryService(schemas)
 
     def collect(self) -> CollectionResult:
         result = CollectionResult()
@@ -129,10 +132,13 @@ class CertificateTransparencyCollector:
                 event = self._to_event(page, entry, source_record_id, payload_sha256)
                 try:
                     alert = self.pipeline.process(event)
+                    parsed_event = CertificateEvent.from_dict(event)
+                    inventory = self.inventory.assess_certificate_event(parsed_event)
                     status = "alerted" if alert is not None else "accepted"
                     error = None
                 except ValidationError as exc:
                     alert = None
+                    inventory = None
                     status = "rejected"
                     error = str(exc)
 
@@ -146,6 +152,8 @@ class CertificateTransparencyCollector:
                     alert=alert,
                     error=error,
                     processed_at=page["collected_at"],
+                    inventory_record=None if inventory is None else inventory.record,
+                    pqc_assessment=None if inventory is None else inventory.assessment,
                 )
                 if status == "alerted":
                     result.alerted += 1
@@ -179,12 +187,13 @@ class CertificateTransparencyCollector:
             )
         )
         return {
-            "schema_version": "1.1",
+            "schema_version": "1.2",
             "event_id": event_id,
             "event_type": "certificate.observed",
             "observed_at": entry["observed_at"],
             "source": {"type": "ct", "id": page["log_id"]},
             "certificate": copy.deepcopy(entry["certificate"]),
+            "cryptography": copy.deepcopy(entry["cryptography"]),
             "context": {"environment": "unknown"},
             "evidence": {
                 "observed_by": self.collector_id,

@@ -1,4 +1,4 @@
-# Threat model: Milestones 1 and 2
+# Threat model: Milestones 1 to 3
 
 ## Assets
 
@@ -6,6 +6,8 @@
 - Organization DNS policy and ownership context
 - Alert integrity, severity, evidence, and audit trail
 - Collector checkpoints, idempotency records, and preserved raw observations
+- Cryptographic inventory records, algorithm evidence, and PQC assessments
+- Asset ownership, business criticality, classification, and protection lifetime
 - Certificate metadata that may expose internal names or infrastructure
 - Future credentials and cryptographic workflow authority (not present today)
 
@@ -26,7 +28,10 @@ deterministic detection/scoring
        +----> advisory explanation (no decision authority)
        |
        v
-local JSONL sink ----> human SOC review
+inventory record + deterministic PQC assessment
+       |
+       v
+local JSONL/file sink ----> human SOC / migration review
 ```
 
 Event, CT fixture, policy, SQLite, and JSONL files can be modified by a local
@@ -49,6 +54,11 @@ audit record.
 | Malicious JSON volume | Resource exhaustion | Bounded local CLI use only | Payload/field limits, streaming parser, quotas, backpressure |
 | JSONL injection | Corrupted downstream parsing | One encoded JSON object per line | Authenticated structured transport and schema enforcement |
 | Privilege creep | Unauthorized issuance/revocation/key action | No credentials, network calls, or action interfaces | Separate executor, least privilege, approvals, audit, rollback |
+| Algorithm-label spoofing | False PQC-readiness claim | Closed algorithm family enum, OID shape validation, provenance retained | Parse signed source artifacts; independently verify implementations and chains |
+| Missing coverage presented as safety | Unmanaged vulnerable cryptography remains hidden | Explicit `certificate-only` coverage and limitations; unknown stays unknown | Coverage metrics across network, code, cloud, PKI, KMS, and HSM collectors |
+| Business-context poisoning | Incorrect migration order | Evidence fields remain separate from deterministic classification | Authoritative CMDB/owner sources, change approval, conflict handling |
+| PQC or hybrid label treated as deployment proof | Premature completion claim | Status is `candidate-quantum-resistant` or `hybrid-unverified`, never safe/compliant | Protocol interoperability, chain, implementation, and relying-party verification |
+| Sensitive inventory disclosure | Attacker gains infrastructure and dependency intelligence | Local-only reference storage | Encryption, tenant isolation, field-level authorization, audit, retention controls |
 
 ## Security invariants
 
@@ -60,10 +70,17 @@ audit record.
 6. The same collector/source identity cannot be accepted with a different raw
    payload digest.
 7. Checkpoints advance only after all entries on a validated page are recorded.
+8. Missing algorithm evidence is `unknown`, never quantum-resistant by default.
+9. PQC and hybrid observations require deployment verification and are not
+   labelled compliant or safe solely from algorithm names.
+10. Certificate evidence does not prove negotiated key establishment or complete
+    enterprise cryptographic coverage.
+11. Observation, inventory record, and PQC assessment are committed atomically.
 
 ## Out of scope
 
 Production authentication/authorization, multi-tenancy, service availability,
 live X.509 parsing, CA validation, CT wire parsing/proof verification, source
 authentication, distributed event delivery, transactional SIEM outbox,
-production SIEM authentication, and remediation/orchestration.
+production SIEM authentication, authoritative CMDB enrichment, dependency-graph
+resolution, non-certificate discovery, and remediation/orchestration.

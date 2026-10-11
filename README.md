@@ -1,11 +1,13 @@
 # AI-assisted Cryptographic Control Plane
 
-This repository is an incremental reference implementation for certificate
-observability, deterministic anomaly detection, and governed AI assistance. It
-is deliberately **not** a certificate authority, key-management service, or
-autonomous remediation system.
+This repository is an incremental reference implementation for an
+**evidence-backed cryptographic discovery and post-quantum cryptography (PQC)
+migration control plane**. Certificate monitoring is its first discovery sensor,
+not its final product boundary. It is deliberately **not** a certificate
+authority, key-management service, migration executor, or autonomous remediation
+system.
 
-The first two milestones are executable end to end:
+The first three milestones are executable end to end:
 
 ```text
 certificate event
@@ -21,6 +23,13 @@ decoded CT fixture pages
   -> provenance envelope + SHA-256 evidence digest
   -> SQLite evidence/idempotency/checkpoint state
   -> canonical event pipeline
+
+canonical certificate event v1.2
+  -> cryptographic algorithm/function evidence
+  -> inventory record with explicit coverage limits
+  -> deterministic PQC exposure assessment
+  -> missing-context and verification requirements
+  -> atomic SQLite evidence + inventory persistence
 ```
 
 ## Trust boundary
@@ -36,6 +45,11 @@ decoded CT fixture pages
 - JSONL is a development sink, not a production SIEM transport.
 - A source digest detects changed content; it does not authenticate a collector
   or prove that a domain belongs to the organization.
+- `unknown` evidence never becomes quantum-resistant by default. ML-KEM,
+  ML-DSA, SLH-DSA, or hybrid labels remain candidates requiring protocol,
+  implementation, trust-chain, peer, and fallback verification.
+- Certificate evidence does not prove which key-establishment mechanism was
+  negotiated and does not represent complete enterprise cryptographic coverage.
 
 ## Quick start
 
@@ -57,6 +71,10 @@ python3 -m venv .venv
   --policy examples/policy.json \
   --state build/ct-state.sqlite \
   --output build/ct-alerts.jsonl
+
+.venv/bin/python -m crypto_control_plane.inventory_cli \
+  --event examples/events/known-domain-issued.json \
+  --output build/pqc-inventory-assessment.json
 ```
 
 The example produces a `CERT-001` alert because `lookalike-example.net` is not
@@ -65,7 +83,7 @@ covered by the configured organization DNS namespace. Use
 
 ## Repository map
 
-- `docs/architecture/`: Council decision record and ADR-001
+- `docs/architecture/`: Council reviews and architecture decision records
 - `docs/threat-model/`: security boundaries, threats, and mitigations
 - `schemas/`: versioned JSON Schema Draft 2020-12 contracts
 - `rules/`: machine-readable detection metadata
@@ -75,16 +93,21 @@ covered by the configured organization DNS namespace. Use
 - `tests/`: unit and integration-style vertical-slice tests
 - `examples/`: safe local fixtures and policy
 
-## Current scope and next gates
+## Milestone 3: PQC inventory foundation
 
-Milestones 1 and 2 remain a local reference implementation. Milestone 2 adds:
+All milestones remain a local reference implementation. Milestone 3 adds:
 
-1. Full Draft 2020-12 schema and format validation.
-2. Versioned policy and event-provenance contracts.
-3. Fixture-driven, read-only decoded CT collection.
-4. Durable SQLite evidence, outcome, idempotency, and checkpoint state.
-5. Replay, restart, malformed-input, source-conflict, and size-limit tests.
-6. Least-privilege GitHub CI across Python 3.11, 3.12, and 3.13.
+1. Certificate event contract v1.2 with public-key, signature, key-usage, and
+   optional business-context evidence.
+2. A separately versioned cryptographic inventory record.
+3. Explainable PQC exposure classifications: `quantum-vulnerable`,
+   `candidate-quantum-resistant`, `hybrid-unverified`, or `unknown`.
+4. Migration priority that remains `needs-context` or `needs-evidence` when the
+   required inputs are absent.
+5. Explicit certificate-only coverage limitations on every inventory record.
+6. Atomic persistence of the source outcome, inventory record, and assessment.
+7. Tests for classical, unknown, candidate-PQC, hybrid, replay, and fail-closed
+   behavior.
 
 The CT fixture contract is intentionally provider-neutral and is **not** an RFC
 6962 or RFC 9162 wire response. A live adapter must separately implement and
@@ -93,13 +116,18 @@ backoff, log-list trust, parsing, and proof verification as applicable.
 
 Recommended next gates are:
 
-1. Select and implement one real read-only CT provider/log adapter.
-2. Authenticate collector-to-control-plane provenance rather than relying only
+1. Select one real read-only discovery source: live X.509/TLS parsing, private
+   PKI, cloud certificate/KMS inventory, or an enterprise certificate manager.
+2. Integrate authoritative asset, service, owner, data-classification, and
+   protection-lifetime context.
+3. Add dependency edges and evidence-conflict handling across multiple sources.
+4. Measure discovery coverage instead of treating unobserved assets as safe.
+5. Authenticate collector-to-control-plane provenance rather than relying only
    on a digest.
-3. Add an outbox and production event transport with explicit delivery
-   semantics, retry, dead-lettering, redaction, and metrics.
-4. Integrate authoritative domain and asset ownership data.
-5. Evaluate an optional model-backed explainer against a fixed corpus.
+6. Add a production outbox/transport with delivery, redaction, tenancy,
+   retention, dead-lettering, and metrics.
+7. Add migration waves, target states, exceptions, approvals, and verification
+   only after the evidence and policy authorities are defined.
 
 Do not add orchestration privileges until policy, approval, separation of
 duties, audit, rollback, and environment-specific authorization are designed

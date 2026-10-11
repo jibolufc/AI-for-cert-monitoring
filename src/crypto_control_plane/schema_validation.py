@@ -11,6 +11,8 @@ from .errors import ValidationError
 
 SCHEMA_FILES = {
     "certificate-event": "certificate-event.schema.json",
+    "cryptographic-inventory-record": "cryptographic-inventory-record.schema.json",
+    "pqc-assessment": "pqc-assessment.schema.json",
     "detection-alert": "detection-alert.schema.json",
     "monitoring-policy": "monitoring-policy.schema.json",
     "ct-observation-page": "ct-observation-page.schema.json",

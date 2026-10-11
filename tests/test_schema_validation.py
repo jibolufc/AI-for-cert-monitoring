@@ -36,6 +36,14 @@ class SchemaValidationTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.schemas.validate("monitoring-policy", policy)
 
+    def test_legacy_certificate_contract_requires_explicit_upgrade(self):
+        event = json.loads(
+            (ROOT / "examples" / "events" / "known-domain-issued.json").read_text()
+        )
+        event["schema_version"] = "1.1"
+        with self.assertRaises(ValidationError):
+            self.schemas.validate("certificate-event", event)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "event_id": "66f7bde4-3e68-4e88-80a0-303508cb3cc3",
   "event_type": "certificate.issued",
   "observed_at": "2026-10-11T09:00:00Z",
@@ -12,6 +12,12 @@
     "san_dns_names": ["login.lookalike-example.net"],
     "not_before": "2026-10-11T08:55:00Z",
     "not_after": "2027-01-09T08:55:00Z"
+  },
+  "cryptography": {
+    "public_key": {"family": "rsa", "name": "RSA", "oid": "1.2.840.113549.1.1.1", "key_size_bits": 2048},
+    "certificate_signature": {"family": "rsa", "name": "sha256WithRSAEncryption", "oid": "1.2.840.113549.1.1.11", "hash_algorithm": "SHA-256"},
+    "key_usage": ["digital-signature", "key-encipherment"],
+    "extended_key_usage": ["server-authentication"]
   },
   "context": {"environment": "production", "account": "demo", "region": "global"},
   "evidence": {

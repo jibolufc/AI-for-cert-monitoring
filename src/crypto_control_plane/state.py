@@ -42,6 +42,13 @@ class CollectorState:
                 processed_at TEXT NOT NULL,
                 PRIMARY KEY (collector_id, source_record_id)
             );
+            CREATE TABLE IF NOT EXISTS inventory_observations (
+                record_id TEXT PRIMARY KEY,
+                observation_id TEXT NOT NULL UNIQUE,
+                record_json TEXT NOT NULL,
+                assessment_json TEXT NOT NULL,
+                observed_at TEXT NOT NULL
+            );
             """
         )
 
@@ -110,9 +117,13 @@ class CollectorState:
         alert: dict[str, Any] | None,
         error: str | None,
         processed_at: str,
+        inventory_record: dict[str, Any] | None = None,
+        pqc_assessment: dict[str, Any] | None = None,
     ) -> None:
         if status not in {"accepted", "alerted", "rejected"}:
             raise ValueError(f"unsupported observation status: {status}")
+        if (inventory_record is None) != (pqc_assessment is None):
+            raise ValueError("inventory_record and pqc_assessment must be supplied together")
         with self.connection:
             try:
                 self.connection.execute(
@@ -140,6 +151,22 @@ class CollectorState:
                 raise ProvenanceConflict(
                     f"could not record {collector_id}/{source_record_id}"
                 ) from exc
+            if inventory_record is not None and pqc_assessment is not None:
+                self.connection.execute(
+                    """
+                    INSERT INTO inventory_observations (
+                        record_id, observation_id, record_json,
+                        assessment_json, observed_at
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        inventory_record["record_id"],
+                        inventory_record["observation_id"],
+                        _canonical_json(inventory_record),
+                        _canonical_json(pqc_assessment),
+                        inventory_record["observed_at"],
+                    ),
+                )
 
     def count_observations(self, status: str | None = None) -> int:
         if status is None:
@@ -173,6 +200,29 @@ class CollectorState:
             "alert": None if row["alert_json"] is None else json.loads(row["alert_json"]),
             "error": row["error"],
             "processed_at": row["processed_at"],
+        }
+
+    def count_inventory_records(self) -> int:
+        row = self.connection.execute(
+            "SELECT COUNT(*) AS count FROM inventory_observations"
+        ).fetchone()
+        assert row is not None
+        return int(row["count"])
+
+    def get_inventory_record(self, record_id: str) -> dict[str, Any] | None:
+        row = self.connection.execute(
+            """
+            SELECT record_json, assessment_json, observed_at
+            FROM inventory_observations WHERE record_id = ?
+            """,
+            (record_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "record": json.loads(row["record_json"]),
+            "assessment": json.loads(row["assessment_json"]),
+            "observed_at": row["observed_at"],
         }
 
 

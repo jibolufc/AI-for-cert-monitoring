@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "log_id": "example-ct-log",
   "page_after_cursor": null,
   "next_cursor": "1",
@@ -17,6 +17,12 @@
         "san_dns_names": ["api.example.com"],
         "not_before": "2026-10-11T09:55:00Z",
         "not_after": "2027-01-09T09:55:00Z"
+      },
+      "cryptography": {
+        "public_key": {"family": "rsa", "name": "RSA", "oid": "1.2.840.113549.1.1.1", "key_size_bits": 2048},
+        "certificate_signature": {"family": "rsa", "name": "sha256WithRSAEncryption", "oid": "1.2.840.113549.1.1.11", "hash_algorithm": "SHA-256"},
+        "key_usage": ["digital-signature", "key-encipherment"],
+        "extended_key_usage": ["server-authentication"]
       }
     }
   ]

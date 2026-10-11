@@ -52,6 +52,7 @@ class CertificateTransparencyCollectorTests(unittest.TestCase):
                 })
                 self.assertEqual(state.get_checkpoint("ct-decoded-fixture"), "2")
                 self.assertEqual(state.count_observations(), 2)
+                self.assertEqual(state.count_inventory_records(), 2)
                 saved = state.get_observation(
                     "ct-decoded-fixture", "example-ct-log:1"
                 )
@@ -63,6 +64,20 @@ class CertificateTransparencyCollectorTests(unittest.TestCase):
                 )
                 self.assertEqual(len(result.alerts), 1)
                 self.assertEqual(result.alerts[0]["rule_id"], "CERT-001")
+                inventory = state.connection.execute(
+                    "SELECT record_id FROM inventory_observations ORDER BY observed_at LIMIT 1"
+                ).fetchone()
+                assert inventory is not None
+                saved_inventory = state.get_inventory_record(inventory["record_id"])
+                assert saved_inventory is not None
+                self.assertEqual(
+                    saved_inventory["assessment"]["exposure_status"],
+                    "quantum-vulnerable",
+                )
+                self.assertEqual(
+                    saved_inventory["assessment"]["migration_priority"],
+                    "needs-context",
+                )
 
     def test_checkpoint_survives_process_restart(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -86,6 +101,7 @@ class CertificateTransparencyCollectorTests(unittest.TestCase):
                 self.assertEqual(second.alerted, 0)
                 self.assertEqual(second.alerts, [])
                 self.assertEqual(state.count_observations(), 2)
+                self.assertEqual(state.count_inventory_records(), 2)
 
     def test_source_identity_reuse_with_changed_content_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -109,7 +125,7 @@ class CertificateTransparencyCollectorTests(unittest.TestCase):
             pages.mkdir()
             (pages / "bad.json").write_text(
                 json.dumps({
-                    "schema_version": "1.0",
+                    "schema_version": "1.1",
                     "page_after_cursor": None,
                     "next_cursor": "1",
                     "collected_at": "2026-10-11T10:00:00Z",

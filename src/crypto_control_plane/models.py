@@ -20,6 +20,18 @@ SOURCE_TYPES = {
     "gcp-certificate-manager", "cert-manager", "vault", "adcs",
 }
 ENVIRONMENTS = {"production", "staging", "development", "unknown"}
+ALGORITHM_FAMILIES = {
+    "rsa", "elliptic-curve", "finite-field-dh", "ml-kem", "ml-dsa",
+    "slh-dsa", "hybrid", "other", "unknown",
+}
+SIGNATURE_FAMILIES = {
+    "rsa", "elliptic-curve", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown",
+}
+KEY_USAGES = {
+    "digital-signature", "content-commitment", "key-encipherment",
+    "data-encipherment", "key-agreement", "key-cert-sign", "crl-sign",
+    "encipher-only", "decipher-only", "unknown",
+}
 
 
 @dataclass(frozen=True)
@@ -38,7 +50,12 @@ class CertificateEvent:
     san_dns_names: tuple[str, ...]
     not_before: str
     not_after: str
+    public_key: dict[str, Any]
+    certificate_signature: dict[str, Any]
+    key_usage: tuple[str, ...]
+    extended_key_usage: tuple[str, ...]
     environment: str
+    context: dict[str, Any]
     evidence: dict[str, Any]
     provenance: dict[str, Any]
 
@@ -47,12 +64,12 @@ class CertificateEvent:
         root = require_mapping(payload, "event")
         require_exact_keys(
             root,
-            {"schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "context", "evidence", "provenance"},
+            {"schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "cryptography", "context", "evidence", "provenance"},
             set(),
             "event",
         )
-        if root["schema_version"] != "1.1":
-            raise ValidationError("event.schema_version must be '1.1'")
+        if root["schema_version"] != "1.2":
+            raise ValidationError("event.schema_version must be '1.2'")
         event_type = require_string(root["event_type"], "event.event_type", maximum=64)
         if event_type not in EVENT_TYPES:
             raise ValidationError("event.event_type is unsupported")
@@ -78,14 +95,68 @@ class CertificateEvent:
         if _timestamp_value(not_after) <= _timestamp_value(not_before):
             raise ValidationError("event.certificate.not_after must be after not_before")
 
+        cryptography = require_mapping(root["cryptography"], "event.cryptography")
+        require_exact_keys(
+            cryptography,
+            {"public_key", "certificate_signature", "key_usage", "extended_key_usage"},
+            set(),
+            "event.cryptography",
+        )
+        public_key = _algorithm(cryptography["public_key"], "event.cryptography.public_key")
+        certificate_signature = _algorithm(
+            cryptography["certificate_signature"],
+            "event.cryptography.certificate_signature",
+            allow_parameters=False,
+            allowed_families=SIGNATURE_FAMILIES,
+        )
+        key_usage = require_string_list(
+            cryptography["key_usage"], "event.cryptography.key_usage"
+        )
+        if any(item not in KEY_USAGES for item in key_usage):
+            raise ValidationError("event.cryptography.key_usage contains an unsupported value")
+        extended_key_usage = require_string_list(
+            cryptography["extended_key_usage"],
+            "event.cryptography.extended_key_usage",
+        )
+
         context = require_mapping(root["context"], "event.context")
-        require_exact_keys(context, {"environment"}, {"account", "region"}, "event.context")
+        require_exact_keys(
+            context,
+            {"environment"},
+            {
+                "account", "region", "asset_id", "service_id", "owner",
+                "business_criticality", "data_classification",
+                "protection_lifetime_months",
+            },
+            "event.context",
+        )
         environment = require_string(context["environment"], "event.context.environment", maximum=32)
         if environment not in ENVIRONMENTS:
             raise ValidationError("event.context.environment is unsupported")
         for optional_key in ("account", "region"):
             if optional_key in context:
                 require_string(context[optional_key], f"event.context.{optional_key}", maximum=256)
+        for optional_key in ("asset_id", "service_id", "owner"):
+            if optional_key in context:
+                require_string(context[optional_key], f"event.context.{optional_key}", maximum=256)
+        if "business_criticality" in context and context["business_criticality"] not in {
+            "low", "medium", "high", "critical", "unknown"
+        }:
+            raise ValidationError("event.context.business_criticality is unsupported")
+        if "data_classification" in context and context["data_classification"] not in {
+            "public", "internal", "confidential", "restricted", "unknown"
+        }:
+            raise ValidationError("event.context.data_classification is unsupported")
+        if "protection_lifetime_months" in context:
+            lifetime = context["protection_lifetime_months"]
+            if (
+                not isinstance(lifetime, int)
+                or isinstance(lifetime, bool)
+                or not 0 <= lifetime <= 1200
+            ):
+                raise ValidationError(
+                    "event.context.protection_lifetime_months must be an integer from 0 to 1200"
+                )
 
         evidence = require_mapping(root["evidence"], "event.evidence")
         require_exact_keys(evidence, {"observed_by", "collected_at"}, {"uri"}, "event.evidence")
@@ -113,7 +184,7 @@ class CertificateEvent:
 
         return cls(
             raw=dict(root),
-            schema_version="1.1",
+            schema_version="1.2",
             event_id=require_uuid(root["event_id"], "event.event_id"),
             event_type=event_type,
             observed_at=require_timestamp(root["observed_at"], "event.observed_at"),
@@ -128,10 +199,47 @@ class CertificateEvent:
             san_dns_names=tuple(require_string_list(certificate["san_dns_names"], "event.certificate.san_dns_names", minimum=1)),
             not_before=not_before,
             not_after=not_after,
+            public_key=public_key,
+            certificate_signature=certificate_signature,
+            key_usage=tuple(key_usage),
+            extended_key_usage=tuple(extended_key_usage),
             environment=environment,
+            context=dict(context),
             evidence=dict(evidence),
             provenance=dict(provenance),
         )
+
+
+def _algorithm(
+    payload: Any,
+    path: str,
+    *,
+    allow_parameters: bool = True,
+    allowed_families: set[str] = ALGORITHM_FAMILIES,
+) -> dict[str, Any]:
+    algorithm = require_mapping(payload, path)
+    optional = {"key_size_bits", "curve"} if allow_parameters else {"hash_algorithm"}
+    require_exact_keys(
+        algorithm,
+        {"family", "name", "oid"},
+        optional,
+        path,
+    )
+    family = require_string(algorithm["family"], f"{path}.family", maximum=64)
+    if family not in allowed_families:
+        raise ValidationError(f"{path}.family is unsupported")
+    require_string(algorithm["name"], f"{path}.name", maximum=128)
+    oid = require_string(algorithm["oid"], f"{path}.oid", maximum=128)
+    if oid != "unknown" and re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", oid) is None:
+        raise ValidationError(f"{path}.oid must be a dotted-decimal OID or 'unknown'")
+    if "key_size_bits" in algorithm:
+        size = algorithm["key_size_bits"]
+        if not isinstance(size, int) or isinstance(size, bool) or size < 1:
+            raise ValidationError(f"{path}.key_size_bits must be a positive integer")
+    for key in ("curve", "hash_algorithm"):
+        if key in algorithm:
+            require_string(algorithm[key], f"{path}.{key}", maximum=128)
+    return dict(algorithm)
 
 
 def _timestamp_value(text: str):
