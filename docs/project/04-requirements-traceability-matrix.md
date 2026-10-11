@@ -13,20 +13,20 @@ completion.
 | FR-001 Versioned validated observations | Implemented | `schemas/`, `SchemaRegistry`, `CertificateEvent` | `test_published_examples_conform_to_full_schemas`, `test_legacy_certificate_contract_requires_explicit_upgrade` |
 | FR-002 Preserve provenance | Implemented for fixtures/lab | `CertificateEvent.provenance`, `CertificateTransparencyCollector` | `test_collects_pages_preserves_evidence_and_alerts` |
 | FR-003 Reject changed-content replay | Implemented | `CollectorState.check_duplicate` | `test_replay_is_idempotent_and_emits_no_second_alert`, `test_source_identity_reuse_with_changed_content_fails_closed` |
-| FR-004 Derive X.509 properties | Implemented in lab | `X509CertificateDiscovery` | `test_golden_generated_corpus`, `test_rsa_and_ecdsa_parameters_are_derived_from_certificate` |
+| FR-004 Derive X.509 properties | Implemented in lab | `X509CertificateDiscovery` | `test_golden_generated_corpus`, RSA/ECDSA parameter test, EdDSA/DSA classification test |
 | FR-005 Separate evidence domains | Partial | Optional event `transport`, inventory `transport_observation` | `test_loopback_probe_records_tls_without_inventing_key_establishment` |
 | FR-006 Carry coverage limits | Implemented for certificate inventory | `PqcInventoryService._record` | `test_classical_certificate_is_quantum_vulnerable_and_high_priority` |
 | FR-010 Stable linked inventory | Implemented | UUIDv5 record, observation ID | `test_assessment_is_deterministic`, CT collector tests |
 | FR-011 Separate function and algorithm | Implemented for certificate uses | `cryptographic_use.function` and `.algorithm` | Inventory schema and inventory tests |
-| FR-012 Identify classical exposure | Implemented | `QUANTUM_VULNERABLE`, assessment rules | `test_classical_certificate_is_quantum_vulnerable_and_high_priority` |
+| FR-012 Identify classical exposure | Implemented | `QUANTUM_VULNERABLE`, assessment rules | Classical certificate priority and EdDSA/DSA classification tests |
 | FR-013 PQC/hybrid requires verification | Implemented | Assessment findings PQC-005/PQC-006 | `test_pqc_algorithms_are_candidates_not_declared_safe`, `test_hybrid_label_requires_protocol_verification` |
 | FR-014 Preserve unknown | Implemented | Assessment algorithm | `test_unknown_algorithm_never_becomes_quantum_safe` |
 | FR-015 Block unsupported priority | Implemented | Missing-context and priority logic | `test_missing_business_context_blocks_prioritisation` |
 | FR-016 Enterprise correlation | Implemented for local evidence and fictional catalogue | `EvidenceReconciler`, catalogue dependency validation | Reconciliation, conflict, unknown-dependency, and cycle tests |
 | FR-020 Function-specific target state | Implemented for reference policy | Target compatibility in `MigrationPlanner` | `test_functionally_invalid_supported_target_is_blocked` |
-| FR-021 Migration waves | Implemented for simulated catalogue | Deterministic priority and wave assignment | `test_fictional_catalogue_produces_dependency_aware_work` |
+| FR-021 Migration waves | Implemented for simulated catalogue | Deterministic priority, migration waves, and matching-target verification lane | Catalogue, current-target verification, and differing-target migration tests |
 | FR-022 Governed work items | Partial local implementation | Versioned work-item contract and `MigrationWorkflow` | Planning, stale-decision, and verification tests |
-| FR-023 Exceptions | Implemented locally | Separate expiry/risk-owner/compensating-control contract | Active and expired exception tests |
+| FR-023 Exceptions | Implemented locally | Separate expiry/risk-owner/compensating-control contract | Active, expired, and named-risk-owner approval tests |
 | FR-024 Change approval/verification | Implemented locally without execution | Decision and verification contracts; separation checks | Self-approval, stale decision, and complete verification tests |
 | FR-025 Regression detection | Implemented for local evidence | Failed verification produces `regressed`; reconciliation preserves contradictory post-change states | Verification and reconciliation tests |
 | FR-026 Coverage reporting | Implemented for explicit catalogue scope | Separate coverage/progress report | `test_coverage_and_migration_progress_are_separate` |
@@ -39,7 +39,7 @@ completion.
 | NFR-007 Reproducible assessment | Implemented | Deterministic rules | `test_assessment_is_deterministic`, `test_alert_identifier_is_deterministic` |
 | FR-033 Controlled delivery | Partial local reference | Transactional SQLite audit and outbox; proposal-only adapters | Control-plane transaction and proposal tests |
 | NFR-005 Isolation | Partial local reference | Tenant-qualified storage, role and separation checks | Tenant, role, self-approval, and stale-version tests |
-| NFR-008 Testability | Implemented for current scope | `tests/` | 75 automated tests |
+| NFR-008 Testability | Implemented for current scope | `tests/` | 80 automated tests |
 
 ## 3. Planned requirements and required proof
 
@@ -71,11 +71,14 @@ completion.
 | Coverage is not completion | Separate report objects and percentages | Separate-metrics test |
 | Conflicts are not silently resolved | Reconciliation lineage and conflict state | Roadmap reconciliation tests |
 | Signing does not upgrade evidence | Separate evidence claim and signer trust | Bundle trust-boundary tests |
+| Bundle manifest cannot inflate evidence | Import recomputes the weakest enclosed evidence level | Re-signed inflated-claim test |
 | Bundle tampering fails closed | Manifest names, sizes, SHA-256, and Ed25519 | Bundle tamper test |
 | Pilot scope is authorised and current | Read-only scope, expiry, independent approver | Pilot negative tests |
 | Tenant data is isolated | Tenant-qualified storage and lookup | Tenant snapshot test |
 | Workflow updates are versioned | Expected-version transition | Stale workflow test |
 | Integrations cannot execute changes | Proposal schema and blocked mutation verbs | Integration proposal test |
+| Current PQC target is verified, not re-migrated | Matching family routes to verification; differing family remains migration work | Matching and differing target tests |
+| Named risk owner owns exception acceptance | Approver must equal risk-owner ID | Risk-owner mismatch test |
 
 ## 5. Traceability maintenance rule
 

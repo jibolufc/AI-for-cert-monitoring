@@ -184,6 +184,7 @@ The local SQLite store demonstrates semantics, not these service levels.
 4. Real controlled discovery without misrepresenting lab data — ADR-004.
 5. Deterministic migration governance without execution authority — ADR-005.
 6. Safe reconciliation, bundle, pilot, tenancy, and integration foundations — ADR-006.
+7. External-review remediation and assurance-preserving controls — ADR-007.
 
 ## 11. Architecture limitations
 

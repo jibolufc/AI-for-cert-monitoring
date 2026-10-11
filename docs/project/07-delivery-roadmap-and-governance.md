@@ -131,12 +131,30 @@ Material changes require an ADR when they alter:
 
 ## 8. Immediate external-evidence backlog
 
-1. Obtain written authorisation for one bounded read-only source.
-2. Approve source authentication, privacy, retention, and stop controls.
-3. Establish an external signer trust registry for bundle import.
-4. Select and validate production identity and tenant isolation architecture.
-5. Demonstrate backup, recovery, observability, SLOs, and secure delivery.
-6. Commission independent security testing.
-7. Review each integration adapter and its credentials separately.
-8. Run the full suite on Python 3.11, 3.12, and 3.13.
+1. Build an isolated cloud/VPC staging environment using synthetic data only.
+2. Demonstrate workload identity, RBAC, private networking, encryption, secrets,
+   central logs, deployment controls, backup, and restore in that environment.
+3. Obtain written authorisation for one bounded read-only source; do not treat
+   the cloud deployment itself as permission to use production data.
+4. Approve source authentication, privacy, retention, and stop controls.
+5. Establish an external signer trust registry for bundle import.
+6. Validate production identity and tenant isolation architecture.
+7. Demonstrate observability, SLOs, recovery, and secure delivery.
+8. Commission independent security testing.
+9. Review each integration adapter and its credentials separately.
+10. Run the full suite on Python 3.11, 3.12, and 3.13.
+
+## 9. Recommended cloud progression
+
+The recommended route is two deliberately separate environments:
+
+1. **Synthetic staging in a VPC:** prove infrastructure controls and operating
+   procedures without customer data or production credentials.
+2. **Authorised read-only pilot:** connect one explicitly approved source after
+   Gate G3 evidence exists, with an authoritative scope denominator, stop
+   conditions, and no cryptographic change authority.
+
+A successful VPC deployment is infrastructure evidence. It is not evidence of
+enterprise discovery coverage, data authority, migration completion, or
+production readiness unless the relevant gates are independently satisfied.
 

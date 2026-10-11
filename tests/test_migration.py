@@ -144,6 +144,47 @@ class MigrationPlanningTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "authenticated source registry"):
             self.plan(catalog)
 
+    def test_current_pqc_target_routes_to_verification_not_migration(self):
+        catalog = catalog_payload()
+        identity = next(
+            item for item in catalog["services"] if item["service_id"] == "svc-identity"
+        )
+        use = identity["cryptographic_uses"][0]
+        use["current_algorithm_family"] = "ml-dsa"
+        use["exposure_status"] = "candidate-quantum-resistant"
+        work = next(
+            item for item in self.plan(catalog).work_items
+            if item["service_id"] == "svc-identity"
+        )
+        self.assertEqual(work["priority"], "verify")
+        self.assertEqual(work["wave"], "verification")
+        self.assertEqual(work["status"], "verification-required")
+        self.assertEqual(
+            work["decision_authority"],
+            "deterministic-advisory-independent-verification-required",
+        )
+
+    def test_different_pqc_target_still_requires_migration_approval(self):
+        catalog = catalog_payload()
+        identity = next(
+            item for item in catalog["services"] if item["service_id"] == "svc-identity"
+        )
+        use = identity["cryptographic_uses"][0]
+        use["current_algorithm_family"] = "ml-dsa"
+        use["exposure_status"] = "candidate-quantum-resistant"
+        use["target_state"].update({
+            "algorithm_family": "slh-dsa",
+            "algorithm_name": "SLH-DSA-SHA2-128s",
+            "standard": "FIPS 205",
+        })
+        work = next(
+            item for item in self.plan(catalog).work_items
+            if item["service_id"] == "svc-identity"
+        )
+        self.assertEqual(work["priority"], "urgent")
+        self.assertEqual(work["wave"], "wave-1")
+        self.assertEqual(work["status"], "approval-required")
+
     def test_stale_decision_and_self_approval_are_rejected(self):
         work = self.item("svc-identity")
         stale = self.approval(work)
@@ -163,7 +204,7 @@ class MigrationPlanningTests(unittest.TestCase):
             "work_item_version": work["object_version"],
             "status": "active",
             "risk_owner_id": "risk-owner-1",
-            "approved_by": "risk-approver-1",
+            "approved_by": "risk-owner-1",
             "approved_at": "2026-09-01T09:00:00Z",
             "expires_at": "2026-10-01T09:00:00Z",
             "rationale": "Temporary supplier-readiness exception.",
@@ -182,7 +223,7 @@ class MigrationPlanningTests(unittest.TestCase):
             "work_item_version": work["object_version"],
             "status": "active",
             "risk_owner_id": "risk-owner-1",
-            "approved_by": "risk-approver-1",
+            "approved_by": "risk-owner-1",
             "approved_at": "2026-10-11T09:00:00Z",
             "expires_at": "2026-11-11T09:00:00Z",
             "rationale": "Supplier target is planned but not yet available.",
@@ -194,6 +235,27 @@ class MigrationPlanningTests(unittest.TestCase):
         )
         self.assertEqual(excepted["status"], "excepted")
         self.assertIn(f"exception:{exception['exception_id']}", excepted["evidence_refs"])
+
+    def test_exception_requires_named_risk_owner_approval(self):
+        work = self.item("svc-payments")
+        exception = {
+            "schema_version": "1.0",
+            "exception_id": "eb6a31ea-451a-4b7b-8ab4-329f09cc1f75",
+            "work_item_id": work["work_item_id"],
+            "work_item_version": work["object_version"],
+            "status": "active",
+            "risk_owner_id": "risk-owner-1",
+            "approved_by": "risk-approver-1",
+            "approved_at": "2026-10-11T09:00:00Z",
+            "expires_at": "2026-11-11T09:00:00Z",
+            "rationale": "Supplier target is planned but not yet available.",
+            "compensating_controls": ["Restrict exposure and review every seven days."],
+            "review_cadence_days": 7,
+        }
+        with self.assertRaisesRegex(ValidationError, "named risk owner"):
+            self.workflow.apply_exception(
+                work, exception, as_of="2026-10-11T12:00:00Z"
+            )
 
     def test_verified_state_requires_independent_complete_post_change_evidence(self):
         work = self.item("svc-identity")

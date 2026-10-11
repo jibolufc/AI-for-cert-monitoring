@@ -88,7 +88,7 @@
         "inventory_record_id": {"type": ["string", "null"], "format": "uuid"},
         "function": {"enum": ["key-establishment", "digital-signature", "certificate-authentication"]},
         "protocol": {"type": "string", "minLength": 1, "maxLength": 128},
-        "current_algorithm_family": {"enum": ["rsa", "elliptic-curve", "finite-field-dh", "ml-kem", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
+        "current_algorithm_family": {"enum": ["rsa", "elliptic-curve", "finite-field-dh", "dsa", "ml-kem", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
         "exposure_status": {"enum": ["quantum-vulnerable", "candidate-quantum-resistant", "hybrid-unverified", "unknown"]},
         "evidence_status": {"enum": ["current", "stale", "missing"]},
         "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},

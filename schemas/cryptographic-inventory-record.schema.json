@@ -89,7 +89,7 @@
     "algorithm": {
       "type": "object", "additionalProperties": false, "required": ["family", "name", "oid"],
       "properties": {
-        "family": {"enum": ["rsa", "elliptic-curve", "finite-field-dh", "ml-kem", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
+        "family": {"enum": ["rsa", "elliptic-curve", "finite-field-dh", "dsa", "ml-kem", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
         "name": {"type": "string", "minLength": 1, "maxLength": 128},
         "oid": {"type": "string", "minLength": 1, "maxLength": 128},
         "key_size_bits": {"type": "integer", "minimum": 1, "maximum": 1048576},
@@ -100,7 +100,7 @@
     "signatureAlgorithm": {
       "type": "object", "additionalProperties": false, "required": ["family", "name", "oid"],
       "properties": {
-        "family": {"enum": ["rsa", "elliptic-curve", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
+        "family": {"enum": ["rsa", "elliptic-curve", "dsa", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
         "name": {"type": "string", "minLength": 1, "maxLength": 128},
         "oid": {"type": "string", "minLength": 1, "maxLength": 128},
         "hash_algorithm": {"type": "string", "minLength": 1, "maxLength": 128}

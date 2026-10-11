@@ -4,7 +4,7 @@
 
 **Project status:** Work in progress
 
-**Current version:** 0.9.0
+**Current version:** 0.9.1
 
 **Current milestone:** Milestone 6 implemented; Milestones 7-9 reference foundations implemented with external gates open
 
@@ -125,12 +125,24 @@ verification.
   7-9 retain explicit external acceptance gates.
 - The repository contains versioned JSON schemas, architecture decisions, a
   threat model, examples, command-line demonstrations, and automated tests.
-- The current automated suite contains **75 tests**.
-- The current full run passes on Python 3.13. The loopback TLS test passes when
-  run outside the restricted test sandbox. A fresh 3.12 run remains pending a
-  test environment containing the pinned project dependencies.
+- The current automated suite contains **80 tests**.
+- The current full run passes all 80 tests on Python 3.13, including the
+  loopback TLS test when run outside the restricted test sandbox. A fresh 3.12
+  run remains pending a test environment containing the pinned dependencies.
 - Milestone 4 is recorded in commit `be71182` and the supporting project
   documentation is recorded in later local commits.
+
+### External reassessment remediation
+
+- Current PQC or hybrid observations that already match their target family now
+  enter an explicit verification lane instead of an urgent migration wave.
+- Ed25519, Ed448, and DSA certificate algorithms are classified as classical,
+  quantum-vulnerable evidence rather than `unknown`.
+- Offline imports recompute their weakest enclosed evidence level and reject a
+  re-signed inflated manifest claim.
+- Migration exceptions require approval by the named risk owner.
+- Portfolio-policy consolidation and standards-governance ownership remain open
+  work and are recorded as D5 and D6 in the findings register.
 
 ## Current limitations
 

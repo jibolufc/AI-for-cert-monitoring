@@ -13,7 +13,7 @@ from uuid import NAMESPACE_URL, uuid5
 from cryptography import x509
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed448, ed25519, rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from .errors import ValidationError
@@ -358,6 +358,25 @@ def _public_key(public_key: Any) -> dict[str, Any]:
             "oid": "1.2.840.10045.2.1",
             "curve": public_key.curve.name,
         }
+    if isinstance(public_key, ed25519.Ed25519PublicKey):
+        return {
+            "family": "elliptic-curve",
+            "name": "Ed25519",
+            "oid": "1.3.101.112",
+        }
+    if isinstance(public_key, ed448.Ed448PublicKey):
+        return {
+            "family": "elliptic-curve",
+            "name": "Ed448",
+            "oid": "1.3.101.113",
+        }
+    if isinstance(public_key, dsa.DSAPublicKey):
+        return {
+            "family": "dsa",
+            "name": "DSA",
+            "oid": "1.2.840.10040.4.1",
+            "key_size_bits": public_key.key_size,
+        }
     class_name = type(public_key).__name__.lower()
     family = "unknown"
     if "mlkem" in class_name:
@@ -375,15 +394,27 @@ def _signature_algorithm(certificate: x509.Certificate) -> dict[str, Any]:
         family = "rsa"
     elif oid.startswith("1.2.840.10045.4."):
         family = "elliptic-curve"
+    elif oid in {"1.3.101.112", "1.3.101.113"}:
+        family = "elliptic-curve"
     elif oid in {f"2.16.840.1.101.3.4.3.{number}" for number in range(17, 20)}:
         family = "ml-dsa"
     elif oid in {f"2.16.840.1.101.3.4.3.{number}" for number in range(20, 32)}:
         family = "slh-dsa"
+    elif oid == "1.2.840.10040.4.3" or oid in {
+        "2.16.840.1.101.3.4.3.1",
+        "2.16.840.1.101.3.4.3.2",
+    }:
+        family = "dsa"
     else:
         family = "unknown"
     names = {
         "1.2.840.113549.1.1.11": "sha256WithRSAEncryption",
         "1.2.840.10045.4.3.2": "ecdsa-with-SHA256",
+        "1.3.101.112": "Ed25519",
+        "1.3.101.113": "Ed448",
+        "1.2.840.10040.4.3": "dsa-with-sha1",
+        "2.16.840.1.101.3.4.3.1": "dsa-with-sha224",
+        "2.16.840.1.101.3.4.3.2": "dsa-with-sha256",
     }
     result = {
         "family": family,

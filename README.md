@@ -32,7 +32,7 @@ canonical certificate event v1.3
   -> missing-context and verification requirements
   -> atomic SQLite evidence + inventory persistence
 
-generated RSA/ECDSA certificate or loopback TLS peer
+generated RSA/ECDSA/EdDSA/DSA certificate or loopback TLS peer
   -> real X.509 parsing
   -> evidence-maturity enforcement
   -> certificate + transport observations kept separate
@@ -43,7 +43,7 @@ fictional enterprise catalogue
   -> validated acyclic dependency graph
   -> function-specific target compatibility
   -> deterministic priority + migration waves
-  -> blocked or approval-required work items
+  -> blocked, approval-required, or matching-target verification work items
   -> version-bound decisions and time-bounded exceptions
   -> independent post-change verification gate
   -> separate discovery coverage and migration progress
@@ -236,6 +236,15 @@ Version 0.9 adds executable foundations for the rest of the roadmap:
    generic execution are rejected.
 
 The reference-release summary always reports `production_gates_passed: false`.
+
+## Version 0.9.1: external reassessment remediation
+
+The reproducible D1-D4 findings are remediated: matching current/target PQC
+families enter verification instead of migration, Ed25519/Ed448/DSA are
+classified as classical exposure, offline import recomputes evidence maturity,
+and the named risk owner must approve an exception. D5 policy consolidation and
+D6 standards-governance ownership remain open in
+`docs/project/09-external-review-findings-register.md`.
 Real Gate G3-G5 closure still requires external authorisation, authenticated
 sources, privacy/security review, service operations, recovery and SLO evidence,
 independent testing, and adapter-specific approval.

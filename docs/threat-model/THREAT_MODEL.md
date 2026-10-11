@@ -69,6 +69,7 @@ audit record.
 | JSONL injection | Corrupted downstream parsing | One encoded JSON object per line | Authenticated structured transport and schema enforcement |
 | Privilege creep | Unauthorized issuance/revocation/key action | No credentials, network calls, or action interfaces | Separate executor, least privilege, approvals, audit, rollback |
 | Algorithm-label spoofing | False PQC-readiness claim | Closed algorithm family enum, OID shape validation, provenance retained | Parse signed source artifacts; independently verify implementations and chains |
+| Classical EdDSA/DSA left unknown | Understated quantum exposure | Ed25519/Ed448 and DSA are explicitly classified as classical; DSA is in the quantum-vulnerable set | Maintain algorithm/OID conformance corpus |
 | Missing coverage presented as safety | Unmanaged vulnerable cryptography remains hidden | Explicit `certificate-only` coverage and limitations; unknown stays unknown | Coverage metrics across network, code, cloud, PKI, KMS, and HSM collectors |
 | Business-context poisoning | Incorrect migration order | Evidence fields remain separate from deterministic classification | Authoritative CMDB/owner sources, change approval, conflict handling |
 | PQC or hybrid label treated as deployment proof | Premature completion claim | Status is `candidate-quantum-resistant` or `hybrid-unverified`, never safe/compliant | Protocol interoperability, chain, implementation, and relying-party verification |
@@ -83,7 +84,7 @@ audit record.
 | Conflicting ownership | Work routed to the wrong authority | Conflicting asset ownership fails closed | Authoritative ownership source and dispute workflow |
 | Functionally wrong target | KEM used as signature target or signature scheme used for key establishment | Function-specific target allowlists; unsupported target blocks work | Versioned organisation policy and protocol-specific profiles |
 | Self-approval or stale approval | Unauthorised or outdated migration decision | Requester cannot approve; decision binds exact object version | Identity provider, RBAC, dual control, signed audit event |
-| Permanent or expired exception | Risk remains unmanaged | Separate exception contract, expiry, risk owner, compensating controls | Scheduled expiry enforcement and escalation |
+| Permanent, expired, or weakly authorised exception | Risk remains unmanaged | Separate exception contract, expiry, named risk-owner approval, compensating controls | Explicit delegated-authority contract, scheduled expiry enforcement and escalation |
 | Weak verification represented as completion | False migration completion | Independent verifier, exact target match, all criteria pass, pre/post evidence required | Authenticated evidence sources and independent assurance sampling |
 | Coverage conflated with completion | Misleading programme reporting | Separate report sections and percentages; no overall score | Portfolio governance review and metric definitions |
 
@@ -120,6 +121,14 @@ audit record.
     criterion to pass.
 21. Discovery coverage and migration completion remain separate measures.
 22. The migration workflow performs no production change.
+23. A current PQC/hybrid family that matches its target requires verification,
+    not a false urgent migration or an automatic completion claim.
+24. Ed25519, Ed448, and DSA certificate evidence is classified as classical and
+    quantum-vulnerable rather than left unknown.
+25. Offline import recomputes the weakest enclosed evidence level and rejects a
+    manifest mismatch, irrespective of a valid self-signature.
+26. An exception approver must be the named risk owner until an explicit
+    delegated-authority contract exists.
 
 ## Milestones 6 to 9 threat-model delta
 
@@ -139,6 +148,7 @@ audit record.
 | Sanitisation interpreted as stronger evidence | Preserve the weakest enclosed evidence level and report sanitisation separately |
 | Self-signed bundle treated as authenticated source | Verify integrity but report signer trust separately; no automatic evidence upgrade |
 | Bundle artifact tampering | Verify exact manifest names, canonical sizes, SHA-256 digests, and Ed25519 signature |
+| Re-signed evidence-claim inflation | Recompute weakest artifact evidence during import; reject manifest mismatch and enclosed high-assurance claims |
 | Pilot scope creep or expired authority | Read-only authorisation, independent approver, explicit assets, validity window, and stop conditions |
 | Cross-tenant object access | Tenant included in every workflow primary key and lookup |
 | Lost update or replayed approval | Expected-version transition and audit/outbox event in one transaction |

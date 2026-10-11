@@ -49,7 +49,7 @@ The repository currently pins `cryptography==50.0.2` and
 git diff --check
 ```
 
-Expected baseline: 61 passing tests. Do not hide failures or skips. A platform
+Expected baseline: 80 passing tests. Do not hide failures or skips. A platform
 that prevents local socket creation may block the loopback test; run that test
 in an authorised local or CI environment and record the constraint separately.
 
@@ -214,4 +214,20 @@ Review `summary.json`, `reconciliation.json`, `cbom.json`,
 Acceptance evidence includes verified bundle integrity, untrusted self-signed
 signer status, simulated pilot status, tenant-scoped audit/outbox counts, no
 integration execution authority, and `production_gates_passed: false`.
+
+## 14. External reassessment remediation demonstration
+
+Run the focused regression evidence:
+
+```bash
+.venv/bin/python -m unittest -v \
+  tests.test_discovery_lab.DiscoveryLabTests.test_eddsa_and_dsa_certificates_are_classified_as_classical \
+  tests.test_migration.MigrationPlanningTests.test_current_pqc_target_routes_to_verification_not_migration \
+  tests.test_migration.MigrationPlanningTests.test_different_pqc_target_still_requires_migration_approval \
+  tests.test_migration.MigrationPlanningTests.test_exception_requires_named_risk_owner_approval \
+  tests.test_roadmap.RemainingMilestoneTests.test_import_recomputes_and_rejects_inflated_evidence_claim
+```
+
+Review `docs/project/09-external-review-findings-register.md`. Confirm D1-D4
+are supported by code and test evidence and D5-D6 remain explicitly open.
 

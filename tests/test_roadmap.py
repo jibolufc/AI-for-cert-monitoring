@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import copy
 import json
 from pathlib import Path
@@ -8,6 +9,8 @@ import unittest
 from uuid import uuid4
 from contextlib import redirect_stdout
 from io import StringIO
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from crypto_control_plane.errors import ValidationError
 from crypto_control_plane.inventory import PqcInventoryService
@@ -19,6 +22,7 @@ from crypto_control_plane.roadmap import (
     OfflineEvidenceBundle,
     PilotGate,
     cbom_export,
+    canonical_json,
     dependency_graph,
     sanitise,
 )
@@ -100,6 +104,19 @@ class RemainingMilestoneTests(unittest.TestCase):
         record["evidence_level"] = "authenticated-production"
         with self.assertRaisesRegex(ValidationError, "cannot originate"):
             OfflineEvidenceBundle(self.schemas).create({"inventory": [record]}, created_at=NOW)
+
+    def test_import_recomputes_and_rejects_inflated_evidence_claim(self):
+        key = Ed25519PrivateKey.generate()
+        service = OfflineEvidenceBundle(self.schemas)
+        bundle = service.create(
+            {"inventory": [self.record]}, created_at=NOW, private_key=key
+        )
+        bundle["manifest"]["evidence_claim"] = "sanitised-capture"
+        bundle["signature"] = base64.b64encode(
+            key.sign(canonical_json(bundle["manifest"]))
+        ).decode()
+        with self.assertRaisesRegex(ValidationError, "weakest artifact evidence"):
+            service.verify(bundle)
 
     def test_sanitiser_redacts_identity_but_preserves_algorithm(self):
         cleaned = sanitise(self.record)

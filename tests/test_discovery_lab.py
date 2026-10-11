@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import redirect_stdout
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 import json
 from pathlib import Path
@@ -10,6 +10,11 @@ import ssl
 import tempfile
 import threading
 import unittest
+
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import dsa, ed448, ed25519
+from cryptography.x509.oid import NameOID
 
 from crypto_control_plane.discovery_lab import (
     LoopbackTlsProbe,
@@ -104,6 +109,60 @@ class DiscoveryLabTests(unittest.TestCase):
             ec_event["cryptography"]["certificate_signature"]["family"],
             "elliptic-curve",
         )
+
+    def test_eddsa_and_dsa_certificates_are_classified_as_classical(self):
+        cases = (
+            ("ed25519", ed25519.Ed25519PrivateKey.generate(), None, "elliptic-curve"),
+            ("ed448", ed448.Ed448PrivateKey.generate(), None, "elliptic-curve"),
+            ("dsa", dsa.generate_private_key(key_size=2048), hashes.SHA256(), "dsa"),
+        )
+        for name, private_key, signing_hash, expected_family in cases:
+            with self.subTest(algorithm=name):
+                subject = issuer = x509.Name(
+                    [x509.NameAttribute(NameOID.COMMON_NAME, f"{name}.invalid")]
+                )
+                certificate = (
+                    x509.CertificateBuilder()
+                    .subject_name(subject)
+                    .issuer_name(issuer)
+                    .public_key(private_key.public_key())
+                    .serial_number(x509.random_serial_number())
+                    .not_valid_before(BASIS - timedelta(minutes=5))
+                    .not_valid_after(BASIS + timedelta(days=30))
+                    .add_extension(
+                        x509.KeyUsage(
+                            digital_signature=True,
+                            content_commitment=False,
+                            key_encipherment=False,
+                            data_encipherment=False,
+                            key_agreement=False,
+                            key_cert_sign=False,
+                            crl_sign=False,
+                            encipher_only=False,
+                            decipher_only=False,
+                        ),
+                        critical=True,
+                    )
+                    .sign(private_key, signing_hash)
+                )
+                event = self.discovery.parse_bytes_for_lab(
+                    certificate.public_bytes(serialization.Encoding.PEM),
+                    source_id=name,
+                    observed_at=OBSERVED_AT,
+                )
+                self.assertEqual(
+                    event["cryptography"]["public_key"]["family"], expected_family
+                )
+                self.assertEqual(
+                    event["cryptography"]["certificate_signature"]["family"],
+                    expected_family,
+                )
+                assessment = self.inventory.assess_certificate_event(
+                    CertificateEvent.from_dict(event)
+                )
+                self.assertEqual(
+                    assessment.assessment["exposure_status"], "quantum-vulnerable"
+                )
 
     def test_ca_without_san_is_valid_discovery_evidence(self):
         generated = self.factory.generate(

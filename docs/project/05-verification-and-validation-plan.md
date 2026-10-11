@@ -20,11 +20,11 @@ for a local reference slice and limited validation of the broader product need.
 | Security negative | Demonstrate refusal and fail-closed properties | Oversize, malformed, replay conflict, evidence escalation, external target tests |
 | System/operational | Validate deployed service behavior | Not yet available |
 | User acceptance | Validate analyst and migration-owner workflows | Not yet available |
-| Independent assurance | External review or penetration test | Not yet available |
+| Independent assurance | External review or penetration test | External reassessment received; reproducible D1-D4 remediated locally; no certification or penetration test |
 
 ## 3. Current automated acceptance suite
 
-The baseline has 75 tests covering:
+The baseline has 80 tests covering:
 
 - schema and format conformance;
 - DNS policy normalisation and boundary behavior;
@@ -33,13 +33,15 @@ The baseline has 75 tests covering:
 - CT pagination, checkpoint restart, replay, provenance conflict, and size bounds;
 - inventory classification, unknown handling, hybrid/PQC verification status,
   missing business context, and function correctness;
-- real generated RSA/ECDSA X.509 parsing;
+- real generated RSA/ECDSA/Ed25519/Ed448/DSA X.509 parsing;
 - validity, CA, SAN/no-SAN, PEM/DER, malformed, and oversized cases;
 - evidence-maturity enforcement;
 - loopback TLS observation and non-loopback refusal;
 - CLI output bundles.
 - fictional catalogue, ownership, dependency, target, priority, wave, decision,
   exception, verification, and separate-metric behavior.
+- matching-target PQC verification routing, evidence-claim recomputation, and
+  named risk-owner exception approval.
 
 Supported verification environments are Python 3.11-3.13 in project metadata
 and CI intent. The latest local evidence records complete passing runs on Python
@@ -158,6 +160,16 @@ retain source approval outside the repository.
 6. Tenant-scoped workflow writes audit and outbox records transactionally.
 7. Role, separation-of-duties, and expected-version controls fail closed.
 8. Proposal-only integrations reject mutation operations.
-9. The complete suite contains 75 tests; production gates remain explicitly
+9. The complete suite contains 80 tests; production gates remain explicitly
    false because this is simulated local evidence.
+
+## 10. External reassessment remediation result
+
+1. A current PQC candidate matching its target enters verification rather than
+   a migration wave; a different target still requires approval.
+2. Ed25519, Ed448, and DSA certificates are classified as classical exposure.
+3. A correctly re-signed bundle with an inflated evidence claim fails import.
+4. An exception approved by anyone other than its named risk owner fails.
+5. D5 policy consolidation and D6 standards governance remain open and are not
+   counted as remediated.
 

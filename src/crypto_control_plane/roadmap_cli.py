@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         for name, payload in outputs.items():
             (args.output_dir / name).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         summary = {
-            "version": "0.9.0", "records": len(records), "reconciled_identities": reconciliation.report["identities"],
+            "version": "0.9.1", "records": len(records), "reconciled_identities": reconciliation.report["identities"],
             "bundle_integrity_verified": verification["integrity_verified"], "bundle_signer_trusted": verification["signer_trusted"],
             "pilot_gate_status": pilot["gate_status"], "integration_execution_authority": proposal["execution_authority"],
             "production_gates_passed": False,

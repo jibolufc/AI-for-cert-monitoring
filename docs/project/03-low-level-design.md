@@ -2,7 +2,7 @@
 
 ## 1. Scope
 
-This LLD documents the implemented version 0.9.0 reference slice and marks
+This LLD documents the implemented version 0.9.1 reference slice and marks
 future interfaces as proposed. It should be updated whenever a schema version,
 security invariant, persistence rule, or public command changes.
 

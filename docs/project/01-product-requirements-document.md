@@ -5,12 +5,12 @@
 | Field | Value |
 |---|---|
 | Product | AI-assisted Cryptographic Control Plane |
-| Product version | 0.9.0 reference implementation |
+| Product version | 0.9.1 reference implementation |
 | Document status | Baseline for review |
 | Date | 2026-10-11 |
 | Product owner | To be assigned |
 | Technical owner | Repository owner |
-| Implementation status | Milestones 1-6 implemented locally; Milestones 7-9 safe reference foundations with external gates open |
+| Implementation status | Milestones 1-6 implemented locally; Milestones 7-9 safe reference foundations; reproducible external-review findings D1-D4 remediated; external gates and D5-D6 open |
 
 ## 2. Product statement
 

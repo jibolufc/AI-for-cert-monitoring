@@ -44,14 +44,16 @@ SOURCE_DOCUMENTS = [
     ("Security, Risk and Assurance Plan", ROOT / "docs/project/06-security-risk-and-assurance-plan.md"),
     ("Delivery Roadmap and Governance", ROOT / "docs/project/07-delivery-roadmap-and-governance.md"),
     ("Project Evidence and Demonstration Guide", ROOT / "docs/project/08-project-evidence-and-demo-guide.md"),
+    ("External Review Findings Register", ROOT / "docs/project/09-external-review-findings-register.md"),
     ("Appendix A - ADR-001", ROOT / "docs/architecture/ADR-001-foundation-and-first-vertical-slice.md"),
     ("Appendix B - ADR-002", ROOT / "docs/architecture/ADR-002-trustworthy-intake-and-replay.md"),
     ("Appendix C - ADR-003", ROOT / "docs/architecture/ADR-003-pqc-inventory-and-exposure.md"),
     ("Appendix D - ADR-004", ROOT / "docs/architecture/ADR-004-controlled-discovery-lab.md"),
     ("Appendix E - ADR-005", ROOT / "docs/architecture/ADR-005-deterministic-migration-governance.md"),
     ("Appendix F - ADR-006", ROOT / "docs/architecture/ADR-006-safe-reference-foundations-for-milestones-6-to-9.md"),
-    ("Appendix G - Threat Model", ROOT / "docs/threat-model/THREAT_MODEL.md"),
-    ("Appendix H - SOC Playbook", ROOT / "docs/soc-playbooks/CERT-001-unknown-domain.md"),
+    ("Appendix G - ADR-007", ROOT / "docs/architecture/ADR-007-external-review-remediation.md"),
+    ("Appendix H - Threat Model", ROOT / "docs/threat-model/THREAT_MODEL.md"),
+    ("Appendix I - SOC Playbook", ROOT / "docs/soc-playbooks/CERT-001-unknown-domain.md"),
 ]
 
 NAVY = colors.HexColor("#102A43")
@@ -235,7 +237,7 @@ class EvidencePackTemplate(BaseDocTemplate):
         canvas.drawString(18 * mm, height - 11 * mm, "AI-Assisted Cryptographic Control Plane")
         canvas.drawRightString(width - 18 * mm, height - 11 * mm, "WORK IN PROGRESS")
         canvas.line(18 * mm, 13 * mm, width - 18 * mm, 13 * mm)
-        canvas.drawString(18 * mm, 9 * mm, "Project Evidence Pack | Version 0.9.0")
+        canvas.drawString(18 * mm, 9 * mm, "Project Evidence Pack | Version 0.9.1")
         canvas.drawRightString(width - 18 * mm, 9 * mm, f"Page {doc.page}")
         canvas.restoreState()
 
@@ -340,8 +342,16 @@ def markdown_flowables(text: str, available_width: float) -> list:
             items = []
             while index < len(lines) and re.match(r"^\s*[-*]\s+", lines[index]):
                 item_text = re.sub(r"^\s*[-*]\s+", "", lines[index]).strip()
-                items.append(ListItem(Paragraph(inline_markup(item_text), STYLES["bullet"]), leftIndent=10))
                 index += 1
+                while (
+                    index < len(lines)
+                    and lines[index].strip()
+                    and lines[index][:1].isspace()
+                    and not re.match(r"^\s*[-*]\s+", lines[index])
+                ):
+                    item_text += " " + lines[index].strip()
+                    index += 1
+                items.append(ListItem(Paragraph(inline_markup(item_text), STYLES["bullet"]), leftIndent=10))
             output.append(KeepTogether([
                 ListFlowable(items, bulletType="bullet", start="circle", leftIndent=15, bulletFontSize=6),
                 Spacer(1, 4),
@@ -352,8 +362,16 @@ def markdown_flowables(text: str, available_width: float) -> list:
             items = []
             while index < len(lines) and re.match(r"^\s*\d+\.\s+", lines[index]):
                 item_text = re.sub(r"^\s*\d+\.\s+", "", lines[index]).strip()
-                items.append(ListItem(Paragraph(inline_markup(item_text), STYLES["bullet"]), leftIndent=12))
                 index += 1
+                while (
+                    index < len(lines)
+                    and lines[index].strip()
+                    and lines[index][:1].isspace()
+                    and not re.match(r"^\s*\d+\.\s+", lines[index])
+                ):
+                    item_text += " " + lines[index].strip()
+                    index += 1
+                items.append(ListItem(Paragraph(inline_markup(item_text), STYLES["bullet"]), leftIndent=12))
             output.append(KeepTogether([
                 ListFlowable(items, bulletType="1", leftIndent=18, bulletFontSize=8),
                 Spacer(1, 4),
@@ -390,7 +408,7 @@ def cover_story() -> list:
         ),
         Spacer(1, 55 * mm),
         Paragraph(
-            "Version 0.9.0<br/>Milestones 1-9 reference release<br/>11 October 2026",
+            "Version 0.9.1<br/>Milestones 1-9 reference release<br/>11 October 2026",
             STYLES["subtitle"],
         ),
         NextPageTemplate("body"),

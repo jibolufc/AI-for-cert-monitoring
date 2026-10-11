@@ -218,13 +218,23 @@ class MigrationPlanner:
             "target_state": copy.deepcopy(use["target_state"]),
             "priority": priority,
             "wave": _wave(priority),
-            "status": "blocked" if blockers else "approval-required",
+            "status": (
+                "blocked"
+                if blockers
+                else "verification-required"
+                if _is_verification_only(use)
+                else "approval-required"
+            ),
             "blockers": blockers,
             "dependencies": dependencies,
             "verification_criteria": _verification_criteria(use),
             "approval_actor_id": None,
             "evidence_refs": evidence_refs,
-            "decision_authority": "deterministic-advisory-human-approval-required",
+            "decision_authority": (
+                "deterministic-advisory-independent-verification-required"
+                if not blockers and _is_verification_only(use)
+                else "deterministic-advisory-human-approval-required"
+            ),
         }
 
     def _coverage_report(
@@ -343,6 +353,8 @@ class MigrationWorkflow:
         _match_versioned_record(work_item, exception)
         if exception["approved_by"] == work_item["requested_by"]:
             raise ValidationError("requester cannot approve their own exception")
+        if exception["approved_by"] != exception["risk_owner_id"]:
+            raise ValidationError("exception must be approved by the named risk owner")
         approved = _timestamp(exception["approved_at"])
         expiry = _timestamp(exception["expires_at"])
         effective = _timestamp(as_of)
@@ -469,6 +481,8 @@ def _priority(service: dict[str, Any], use: dict[str, Any]) -> str:
         or service["protection_lifetime_months"] is None
     ):
         return "needs-context"
+    if _is_verification_only(use):
+        return "verify"
     lifetime = service["protection_lifetime_months"]
     if service["business_criticality"] == "critical" or (
         service["data_classification"] in {"confidential", "restricted"}
@@ -490,7 +504,17 @@ def _wave(priority: str) -> str:
         "low": "wave-3",
         "needs-context": "unassigned",
         "needs-evidence": "unassigned",
+        "verify": "verification",
     }[priority]
+
+
+def _is_verification_only(use: dict[str, Any]) -> bool:
+    return (
+        use["exposure_status"]
+        in {"candidate-quantum-resistant", "hybrid-unverified"}
+        and use["current_algorithm_family"]
+        == use["target_state"]["algorithm_family"]
+    )
 
 
 def _verification_criteria(use: dict[str, Any]) -> list[str]:

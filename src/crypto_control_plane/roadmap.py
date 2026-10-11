@@ -172,6 +172,15 @@ class OfflineEvidenceBundle:
             value = bundle["artifacts"][entry["name"]]
             if sha256(value) != entry["sha256"] or len(canonical_json(value)) != entry["size_bytes"]:
                 raise ValidationError(f"bundle artifact digest mismatch: {entry['name']}")
+        derived_claim, derived_levels = _artifact_evidence_level(bundle["artifacts"])
+        if derived_levels & HIGH_ASSURANCE:
+            raise ValidationError(
+                "offline import cannot establish a high-assurance evidence claim"
+            )
+        if manifest["evidence_claim"] != derived_claim:
+            raise ValidationError(
+                "bundle evidence claim does not match the weakest artifact evidence"
+            )
         try:
             public = Ed25519PublicKey.from_public_bytes(base64.b64decode(bundle["public_key"], validate=True))
             public.verify(base64.b64decode(bundle["signature"], validate=True), canonical_json(manifest))

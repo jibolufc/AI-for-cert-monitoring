@@ -25,11 +25,11 @@ EVIDENCE_LEVELS = {
     "authenticated-production", "independently-verified",
 }
 ALGORITHM_FAMILIES = {
-    "rsa", "elliptic-curve", "finite-field-dh", "ml-kem", "ml-dsa",
+    "rsa", "elliptic-curve", "finite-field-dh", "dsa", "ml-kem", "ml-dsa",
     "slh-dsa", "hybrid", "other", "unknown",
 }
 SIGNATURE_FAMILIES = {
-    "rsa", "elliptic-curve", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown",
+    "rsa", "elliptic-curve", "dsa", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown",
 }
 KEY_USAGES = {
     "digital-signature", "content-commitment", "key-encipherment",

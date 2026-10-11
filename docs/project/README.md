@@ -5,7 +5,7 @@
 **Product goal:** Evidence-backed cryptographic discovery and post-quantum
 cryptography (PQC) migration management
 
-**Document baseline:** Version 0.9.0, Milestones 1-9 reference release
+**Document baseline:** Version 0.9.1, Milestones 1-9 reference release with external-review remediation
 
 **Prepared:** 2026-10-11
 
@@ -49,7 +49,8 @@ Every material claim should use one of these states:
 
 Related engineering records:
 
-- `docs/architecture/ADR-001` through `ADR-006`: accepted architecture decisions
+- `docs/architecture/ADR-001` through `ADR-007`: accepted architecture decisions
+- `09-external-review-findings-register.md`: disposition and evidence for the external reassessment
 - `docs/threat-model/THREAT_MODEL.md`: detailed threat inventory and invariants
 - `schemas/`: machine-readable interface contracts
 - `tests/`: executable verification evidence

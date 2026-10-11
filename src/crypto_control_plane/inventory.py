@@ -8,7 +8,7 @@ from .models import CertificateEvent
 from .schema_validation import SchemaRegistry
 
 
-QUANTUM_VULNERABLE = {"rsa", "elliptic-curve", "finite-field-dh"}
+QUANTUM_VULNERABLE = {"rsa", "elliptic-curve", "finite-field-dh", "dsa"}
 PQC_FAMILIES = {"ml-kem", "ml-dsa", "slh-dsa"}
 
 
