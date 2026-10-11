@@ -8,25 +8,12 @@
 | 2 | Replay-safe bounded intake and durable evidence | Commit `20e5705`, ADR-002, CT tests |
 | 3 | Cryptographic inventory and deterministic PQC exposure | Commit `887fdb3`, ADR-003, inventory tests |
 | 4 | Controlled real X.509 and loopback TLS discovery lab | Commit `be71182`, ADR-004, discovery tests |
+| 5 | Deterministic migration planning and governance using a fictional enterprise | ADR-005, migration schemas, planner/workflow tests |
 
 These commits are local project evidence unless and until deliberately pushed
 and reviewed on GitHub.
 
 ## 2. Recommended roadmap
-
-### Milestone 5 — Migration management domain
-
-Build a fictional enterprise dataset and the core governance contracts:
-
-- catalogue, owner, service, supplier, and dependency records;
-- current/target cryptographic state by function and protocol;
-- migration work item, wave, decision, exception, and verification records;
-- deterministic priority and wave prerequisites;
-- coverage accounting and regression states;
-- full traceability and tests.
-
-Exit: a reviewer can move a fictional portfolio from discovery through approved
-plans and verified outcomes without production data or change authority.
 
 ### Milestone 6 — Evidence reconciliation and offline bundle
 
@@ -122,7 +109,7 @@ Prioritise features using:
 5. reversibility and learning value;
 6. engineering and operating cost.
 
-This places migration-domain modelling before a broad UI and authenticated
+This places evidence reconciliation before a broad UI and authenticated
 read-only discovery before any execution authority.
 
 ## 7. Change control
@@ -139,12 +126,11 @@ Material changes require an ADR when they alter:
 
 ## 8. Immediate next backlog
 
-1. Define Milestone 5 contracts and fictional enterprise scenarios.
-2. Add a migration state-machine ADR.
-3. Add catalogue, dependency, work-item, decision, exception, and verification
-   schemas.
-4. Implement deterministic prioritisation with explicit unknown/block states.
-5. Add coverage and migration dashboards as generated local reports.
+1. Define observation-to-catalogue reconciliation and conflict-lineage rules.
+2. Add a signed offline evidence-bundle contract and import validator.
+3. Add sanitisation controls that preserve the properties under test.
+4. Produce CBOM-style and dependency-graph exports.
+5. Generate local technical and executive reports from the same evidence.
 6. Extend the threat model and traceability matrix.
 7. Run the full suite on Python 3.11, 3.12, and 3.13.
 

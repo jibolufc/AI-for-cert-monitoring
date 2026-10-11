@@ -2,7 +2,7 @@
 
 ## 1. Scope
 
-This LLD documents the implemented version 0.4.0 reference slice and marks
+This LLD documents the implemented version 0.5.0 reference slice and marks
 future interfaces as proposed. It should be updated whenever a schema version,
 security invariant, persistence rule, or public command changes.
 
@@ -19,6 +19,7 @@ security invariant, persistence rule, or public command changes.
 | `state.py` | SQLite schema and atomic outcome/inventory persistence |
 | `inventory.py` | Inventory projection and deterministic PQC exposure assessment |
 | `discovery_lab.py` | Synthetic X.509 generation, PEM/DER parsing, and loopback TLS observation |
+| `migration.py` | Catalogue validation, dependency ordering, migration planning, decisions, exceptions, verification, and separate metrics |
 | `sinks.py` | JSONL development alert sink |
 | `*_cli.py` | File-oriented command entry points |
 
@@ -222,36 +223,41 @@ The probe:
 | `crypto-control-plane-ct-fixture` | fixture directory, policy, state, output | Collection counts, SQLite evidence, alerts |
 | `crypto-control-plane-inventory` | event, output | Inventory and assessment JSON bundle |
 | `crypto-control-plane-x509-lab` | certificate, evidence level, output | Parsed event, inventory, assessment bundle |
+| `crypto-control-plane-migration-plan` | enterprise catalogue, output | Catalogue, work items, and separate coverage/progress report |
 
 Commands return non-zero on invalid input or an unsupported evidence claim.
 They are local development interfaces, not stable production APIs.
 
-## 12. Proposed Milestone 5 data types
+## 12. Implemented Milestone 5 data types
 
-The next implementation should introduce separately versioned contracts:
+Milestone 5 introduces separately versioned contracts for the following domains.
 
 ### Enterprise catalogue record
 
 - `asset_id`, `service_id`, `owner_id`, `environment`
 - business criticality, data classification, protection lifetime
-- authoritative source, source version, effective time
-- supplier/product/version and lifecycle dates
-- dependency references and evidence status
+- catalogue identity/version, scope, and effective time
+- supplier/product/version
+- dependency references, cryptographic uses, evidence status, and target state
 
 ### Migration work item
 
 - stable work ID and linked inventory/dependency IDs
 - current and target cryptographic state by function/protocol
-- wave, owner, approver, target date, readiness status
-- blockers, prerequisites, rollback criteria, verification plan
-- exception reference and decision history
+- wave, owner, requester, approver, readiness status, and object version
+- blockers, dependencies, verification criteria, and evidence references
 
 ### Decision record
 
 - decision ID, type, actor identity, role, time
 - object and version decided upon
 - rationale, evidence references, conditions, and expiry
-- cryptographic audit receipt where required
+
+### Exception record
+
+- exception ID and exact work-item version
+- risk owner, approver, rationale, approval and expiry times
+- compensating controls and review cadence
 
 ### Verification record
 
@@ -261,26 +267,19 @@ The next implementation should introduce separately versioned contracts:
 - residual findings and regression checks
 - verifier identity and independence level
 
-## 13. Proposed migration state machine
+## 13. Migration state machine
 
 ```text
-discovered
-  -> context-required
-  -> assessed
-  -> planned
-  -> approval-required
-  -> approved
-  -> implementation-external
-  -> verification-required
-  -> verified
-
-Any active state -> blocked
-Any approval state -> excepted (time bounded)
-Verified -> regressed (new contradictory evidence)
+planner -> blocked OR approval-required
+approval-required -> approved OR rejected OR blocked (time-bounded deferral)
+blocked -> excepted (separate active exception record)
+approved -> external implementation evidence -> verification-required
+verification-required -> verified OR regressed OR verification-required
 ```
 
-Transitions must be policy-checked, identity-bound, append-audited, and reject
-stale object versions.
+Implemented transitions are policy-checked and reject stale object versions.
+Production identity binding and an append-only durable audit service remain
+future controls.
 
 ## 14. Error-handling rules
 

@@ -48,8 +48,9 @@ SOURCE_DOCUMENTS = [
     ("Appendix B - ADR-002", ROOT / "docs/architecture/ADR-002-trustworthy-intake-and-replay.md"),
     ("Appendix C - ADR-003", ROOT / "docs/architecture/ADR-003-pqc-inventory-and-exposure.md"),
     ("Appendix D - ADR-004", ROOT / "docs/architecture/ADR-004-controlled-discovery-lab.md"),
-    ("Appendix E - Threat Model", ROOT / "docs/threat-model/THREAT_MODEL.md"),
-    ("Appendix F - SOC Playbook", ROOT / "docs/soc-playbooks/CERT-001-unknown-domain.md"),
+    ("Appendix E - ADR-005", ROOT / "docs/architecture/ADR-005-deterministic-migration-governance.md"),
+    ("Appendix F - Threat Model", ROOT / "docs/threat-model/THREAT_MODEL.md"),
+    ("Appendix G - SOC Playbook", ROOT / "docs/soc-playbooks/CERT-001-unknown-domain.md"),
 ]
 
 NAVY = colors.HexColor("#102A43")
@@ -233,7 +234,7 @@ class EvidencePackTemplate(BaseDocTemplate):
         canvas.drawString(18 * mm, height - 11 * mm, "AI-Assisted Cryptographic Control Plane")
         canvas.drawRightString(width - 18 * mm, height - 11 * mm, "WORK IN PROGRESS")
         canvas.line(18 * mm, 13 * mm, width - 18 * mm, 13 * mm)
-        canvas.drawString(18 * mm, 9 * mm, "Project Evidence Pack | Version 0.4.0")
+        canvas.drawString(18 * mm, 9 * mm, "Project Evidence Pack | Version 0.5.0")
         canvas.drawRightString(width - 18 * mm, 9 * mm, f"Page {doc.page}")
         canvas.restoreState()
 
@@ -388,7 +389,7 @@ def cover_story() -> list:
         ),
         Spacer(1, 55 * mm),
         Paragraph(
-            "Version 0.4.0<br/>Milestones 1-4 complete<br/>11 October 2026",
+            "Version 0.5.0<br/>Milestones 1-5 complete<br/>11 October 2026",
             STYLES["subtitle"],
         ),
         NextPageTemplate("body"),

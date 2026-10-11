@@ -1,4 +1,4 @@
-# Threat model: Milestones 1 to 4
+# Threat model: Milestones 1 to 5
 
 ## Assets
 
@@ -12,6 +12,9 @@
 - Future credentials and cryptographic workflow authority (not present today)
 - Evidence-maturity labels and the boundary between lab and production claims
 - Local TLS target selection and parsed certificate artifacts
+- Migration catalogue ownership, dependency, supplier, and target-state data
+- Work-item versions, human decisions, exceptions, and verification evidence
+- Separation between discovery coverage and verified migration progress
 
 ## Trust boundaries
 
@@ -33,7 +36,16 @@ deterministic detection/scoring
 inventory record + deterministic PQC assessment
        |
        v
-local JSONL/file sink ----> human SOC / migration review
+catalogue + dependency validation
+       |
+       v
+deterministic migration plan ----> human decision / time-bounded exception
+       |                                      |
+       |                                      v
+       +----------------------------> external implementation
+                                              |
+                                              v
+                                  independent verification evidence
 ```
 
 Event, CT fixture, policy, SQLite, and JSONL files can be modified by a local
@@ -66,6 +78,14 @@ audit record.
 | Certificate parser resource abuse | Memory/CPU exhaustion or parser exploitation | One-megabyte input bound, pinned parser dependency, malformed input fails closed | Sandboxed parser service, quotas, dependency monitoring |
 | TLS cipher label used as KEM proof | False conclusion about key establishment | Negotiated key establishment is explicitly `null` unless directly evidenced | Protocol-specific telemetry and independent handshake verification |
 | Synthetic private key leakage | Lab key reused or mistaken for production material | Factory returns ephemeral, unencrypted keys only for local tests; artifacts labelled generated | Ephemeral storage, restrictive file mode, automated cleanup, never import into production stores |
+| Fictional catalogue presented as enterprise truth | False assurance and wrong migration plan | Catalogue and report are `simulated`; high-assurance claims rejected | Authorised reconciliation against authenticated asset sources |
+| Dependency graph poisoning or cycle | Unsafe ordering or planning deadlock | Unknown/self/duplicate dependencies and cycles fail closed | Authenticated sources, conflict lineage, graph-owner review |
+| Conflicting ownership | Work routed to the wrong authority | Conflicting asset ownership fails closed | Authoritative ownership source and dispute workflow |
+| Functionally wrong target | KEM used as signature target or signature scheme used for key establishment | Function-specific target allowlists; unsupported target blocks work | Versioned organisation policy and protocol-specific profiles |
+| Self-approval or stale approval | Unauthorised or outdated migration decision | Requester cannot approve; decision binds exact object version | Identity provider, RBAC, dual control, signed audit event |
+| Permanent or expired exception | Risk remains unmanaged | Separate exception contract, expiry, risk owner, compensating controls | Scheduled expiry enforcement and escalation |
+| Weak verification represented as completion | False migration completion | Independent verifier, exact target match, all criteria pass, pre/post evidence required | Authenticated evidence sources and independent assurance sampling |
+| Coverage conflated with completion | Misleading programme reporting | Separate report sections and percentages; no overall score | Portfolio governance review and metric definitions |
 
 ## Security invariants
 
@@ -89,6 +109,17 @@ audit record.
 13. The lab TLS probe cannot connect to a non-loopback target.
 14. Cipher-suite and certificate observations do not invent negotiated
     key-establishment evidence.
+15. Catalogue evidence cannot claim a higher maturity than its source boundary.
+16. Dependency cycles, unknown dependencies, duplicate identities, and
+    conflicting asset ownership fail closed.
+17. A requester cannot approve their own migration or exception.
+18. Decisions, exceptions, and verification records bind to the exact current
+    work-item version; stale records fail closed.
+19. Exceptions are time bounded and require compensating controls.
+20. `verified` requires independent pre/post evidence and every approved
+    criterion to pass.
+21. Discovery coverage and migration completion remain separate measures.
+22. The migration workflow performs no production change.
 
 ## Out of scope
 
@@ -96,5 +127,6 @@ Production authentication/authorization, multi-tenancy, service availability,
 live X.509 parsing, CA validation, CT wire parsing/proof verification, source
 authentication, distributed event delivery, transactional SIEM outbox,
 production SIEM authentication, authoritative CMDB enrichment, dependency-graph
-resolution, Internet or enterprise-network scanning, authenticated production
-discovery, non-certificate discovery, and remediation/orchestration.
+reconciliation, Internet or enterprise-network scanning, authenticated
+production discovery, non-certificate discovery, durable multi-user workflow,
+production approval identity, and remediation/orchestration.

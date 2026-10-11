@@ -7,7 +7,7 @@ not its final product boundary. It is deliberately **not** a certificate
 authority, key-management service, migration executor, or autonomous remediation
 system.
 
-The first four milestones are executable end to end:
+The first five milestones are executable end to end:
 
 ```text
 certificate event
@@ -36,6 +36,16 @@ generated RSA/ECDSA certificate or loopback TLS peer
   -> evidence-maturity enforcement
   -> certificate + transport observations kept separate
   -> inventory and PQC assessment bundle
+
+fictional enterprise catalogue
+  -> ownership + business/data context
+  -> validated acyclic dependency graph
+  -> function-specific target compatibility
+  -> deterministic priority + migration waves
+  -> blocked or approval-required work items
+  -> version-bound decisions and time-bounded exceptions
+  -> independent post-change verification gate
+  -> separate discovery coverage and migration progress
 ```
 
 ## Trust boundary
@@ -89,6 +99,11 @@ python3 -m venv .venv
   --certificate /path/to/test-certificate.pem \
   --evidence-level generated \
   --output build/x509-discovery-bundle.json
+
+# Build a simulated, dependency-aware PQC migration plan.
+.venv/bin/python -m crypto_control_plane.migration_cli \
+  --catalog examples/migration/fictional-enterprise.json \
+  --output build/migration-plan.json
 ```
 
 The example produces a `CERT-001` alert because `lookalike-example.net` is not
@@ -104,6 +119,7 @@ covered by the configured organization DNS namespace. Use
 - `rules/`: machine-readable detection metadata
 - `src/crypto_control_plane/`: validated pipeline implementation
 - `examples/ct/pages/`: provider-neutral decoded CT pages for offline testing
+- `examples/migration/`: fictional enterprise migration-planning data
 - `docs/soc-playbooks/`: analyst response procedures
 - `tests/`: unit and integration-style vertical-slice tests
 - `examples/`: safe local fixtures and policy
@@ -148,18 +164,38 @@ The CT fixture contract is intentionally provider-neutral and is **not** an RFC
 test source authentication, TLS, timeouts, bounded downloads, pagination,
 backoff, log-list trust, parsing, and proof verification as applicable.
 
+Milestone 5 implements the fictional-catalogue, workflow, and separate-metrics
+gates that were identified by this laboratory milestone.
+
+## Milestone 5: migration management domain
+
+Milestone 5 adds a deterministic, non-executing migration-management layer:
+
+1. A six-service fictional enterprise catalogue with owners, assets, suppliers,
+   data classifications, protection lifetimes, cryptographic uses, and
+   dependencies.
+2. A dependency graph that fails closed on unknown references, self-dependency,
+   cycles, duplicate identities, and conflicting asset ownership.
+3. Function-specific target validation: ML-KEM or hybrid for key establishment;
+   ML-DSA, SLH-DSA, or hybrid for signature/authentication uses.
+4. Deterministic priorities and waves that preserve missing context and missing
+   evidence as unassigned work.
+5. Versioned work items, human decision records, time-bounded exceptions, and
+   independent verification records.
+6. Guards against self-approval, stale decisions, expired exceptions, target
+   mismatch, incomplete test evidence, and non-independent verification.
+7. Separate discovery coverage and migration-progress measures. The fictional
+   baseline reports 83.33% simulated discovery coverage and 0% verified
+   migration; neither is a production claim.
+
+No workflow method performs a production change. Implementation occurs in an
+external controlled change process, and a work item becomes `verified` only
+after all approved criteria pass with pre-change and post-change evidence.
+
 Recommended next gates are:
 
-1. Build a fictional enterprise catalogue with services, owners, data lifetime,
-   suppliers, dependencies, current state, and target state.
-2. Add migration waves, blockers, exceptions, approval gates, and verification
-   criteria against the generated discovery corpus.
-3. Add coverage accounting that distinguishes tested, observed, unknown, and
-   out-of-scope assets.
-4. Design an offline customer evidence bundle and sanitisation workflow.
-5. Select an authorised read-only pilot source only when access becomes
-   available; do not represent lab results as production coverage.
-
-Do not add orchestration privileges until policy, approval, separation of
-duties, audit, rollback, and environment-specific authorization are designed
-and tested.
+1. Add observation-to-catalogue reconciliation with conflict lineage.
+2. Create a signed offline evidence bundle and sanitisation workflow.
+3. Add local graph and portfolio reports without implying production coverage.
+4. Obtain explicit authorisation before designing the first read-only pilot
+   collector.

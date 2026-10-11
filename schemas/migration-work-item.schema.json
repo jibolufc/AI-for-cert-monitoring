@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/migration-work-item.schema.json",
+  "title": "Governed PQC migration work item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "work_item_id", "object_version", "catalog_id", "catalog_version", "service_id", "asset_id", "use_id", "owner_id", "requested_by", "environment", "current_state", "target_state", "priority", "wave", "status", "blockers", "dependencies", "verification_criteria", "approval_actor_id", "evidence_refs", "decision_authority"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "work_item_id": {"type": "string", "format": "uuid"},
+    "object_version": {"type": "integer", "minimum": 1},
+    "catalog_id": {"type": "string", "format": "uuid"},
+    "catalog_version": {"type": "integer", "minimum": 1},
+    "service_id": {"$ref": "#/$defs/id"},
+    "asset_id": {"$ref": "#/$defs/id"},
+    "use_id": {"$ref": "#/$defs/id"},
+    "owner_id": {"$ref": "#/$defs/id"},
+    "requested_by": {"$ref": "#/$defs/id"},
+    "environment": {"enum": ["production", "staging", "development"]},
+    "current_state": {"$ref": "#/$defs/cryptoState"},
+    "target_state": {"$ref": "#/$defs/targetState"},
+    "priority": {"enum": ["urgent", "high", "medium", "low", "needs-context", "needs-evidence"]},
+    "wave": {"enum": ["wave-1", "wave-2", "wave-3", "unassigned"]},
+    "status": {"enum": ["blocked", "approval-required", "approved", "rejected", "implementation-external", "verification-required", "verified", "excepted", "regressed"]},
+    "blockers": {"type": "array", "uniqueItems": true, "items": {"enum": ["missing-context", "missing-evidence", "stale-evidence", "target-not-ready", "unsupported-target", "blocked-dependency"]}},
+    "dependencies": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "verification_criteria": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 512}},
+    "approval_actor_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 512}},
+    "decision_authority": {"const": "deterministic-advisory-human-approval-required"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$"},
+    "cryptoState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["function", "protocol", "algorithm_family", "exposure_status", "evidence_status", "evidence_level"],
+      "properties": {
+        "function": {"enum": ["key-establishment", "digital-signature", "certificate-authentication"]},
+        "protocol": {"type": "string", "minLength": 1, "maxLength": 128},
+        "algorithm_family": {"enum": ["rsa", "elliptic-curve", "finite-field-dh", "ml-kem", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
+        "exposure_status": {"enum": ["quantum-vulnerable", "candidate-quantum-resistant", "hybrid-unverified", "unknown"]},
+        "evidence_status": {"enum": ["current", "stale", "missing"]},
+        "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]}
+      }
+    },
+    "targetState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm_family", "algorithm_name", "standard", "readiness"],
+      "properties": {
+        "algorithm_family": {"enum": ["ml-kem", "ml-dsa", "slh-dsa", "hybrid", "unknown"]},
+        "algorithm_name": {"type": "string", "minLength": 1, "maxLength": 128},
+        "standard": {"type": "string", "minLength": 1, "maxLength": 128},
+        "readiness": {"enum": ["supported", "planned", "unsupported", "unknown"]}
+      }
+    }
+  }
+}

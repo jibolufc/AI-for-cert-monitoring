@@ -21,6 +21,10 @@ class SchemaValidationTests(unittest.TestCase):
             self.schemas.validate("certificate-event", json.loads(path.read_text()))
         for path in (ROOT / "examples" / "ct" / "pages").glob("*.json"):
             self.schemas.validate("ct-observation-page", json.loads(path.read_text()))
+        catalog = json.loads(
+            (ROOT / "examples" / "migration" / "fictional-enterprise.json").read_text()
+        )
+        self.schemas.validate("enterprise-catalog", catalog)
 
     def test_format_checker_rejects_invalid_uri(self):
         page = json.loads(

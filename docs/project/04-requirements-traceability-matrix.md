@@ -22,6 +22,14 @@ completion.
 | FR-013 PQC/hybrid requires verification | Implemented | Assessment findings PQC-005/PQC-006 | `test_pqc_algorithms_are_candidates_not_declared_safe`, `test_hybrid_label_requires_protocol_verification` |
 | FR-014 Preserve unknown | Implemented | Assessment algorithm | `test_unknown_algorithm_never_becomes_quantum_safe` |
 | FR-015 Block unsupported priority | Implemented | Missing-context and priority logic | `test_missing_business_context_blocks_prioritisation` |
+| FR-016 Enterprise correlation | Partial with fictional catalogue | `enterprise-catalog` contract and dependency validation | Catalogue, conflict, unknown-dependency, and cycle tests |
+| FR-020 Function-specific target state | Implemented for reference policy | Target compatibility in `MigrationPlanner` | `test_functionally_invalid_supported_target_is_blocked` |
+| FR-021 Migration waves | Implemented for simulated catalogue | Deterministic priority and wave assignment | `test_fictional_catalogue_produces_dependency_aware_work` |
+| FR-022 Governed work items | Partial local implementation | Versioned work-item contract and `MigrationWorkflow` | Planning, stale-decision, and verification tests |
+| FR-023 Exceptions | Implemented locally | Separate expiry/risk-owner/compensating-control contract | Active and expired exception tests |
+| FR-024 Change approval/verification | Implemented locally without execution | Decision and verification contracts; separation checks | Self-approval, stale decision, and complete verification tests |
+| FR-025 Regression detection | Partial | Failed verification produces `regressed`; live reconciliation planned | Verification workflow tests |
+| FR-026 Coverage reporting | Implemented for explicit catalogue scope | Separate coverage/progress report | `test_coverage_and_migration_progress_are_separate` |
 | FR-030 Deterministic detection | Implemented | `CertificateMonitoringPipeline` | Pipeline test suite |
 | FR-031 Evidence-linked explanation | Partial | Deterministic explanation and alert evidence | `test_unknown_domain_produces_high_severity_alert` |
 | FR-032 AI cannot change decisions | Implemented structurally | No model call; explainer receives decided result | Determinism and alert schema tests |
@@ -29,21 +37,13 @@ completion.
 | NFR-002 Auditability | Partial | Provenance, policy version, deterministic IDs, SQLite state | CT collection and deterministic-ID tests |
 | NFR-006 Portable contracts | Implemented | JSON Schema Draft 2020-12 | Full-schema tests |
 | NFR-007 Reproducible assessment | Implemented | Deterministic rules | `test_assessment_is_deterministic`, `test_alert_identifier_is_deterministic` |
-| NFR-008 Testability | Implemented for current scope | `tests/` | 46 automated tests |
+| NFR-008 Testability | Implemented for current scope | `tests/` | 61 automated tests |
 
 ## 3. Planned requirements and required proof
 
 | Requirement | Status | Required implementation evidence | Required acceptance evidence |
 |---|---|---|---|
 | FR-007 Multi-source collectors | Planned | Authenticated source adapters and conformance kit | Authorised integration tests; reconciliation and coverage report |
-| FR-016 Enterprise correlation | Planned | Catalogue and dependency graph contracts | Known-estate fixture plus conflict/cycle tests |
-| FR-020 Function-specific target state | Planned | Target-policy contract and compatibility rules | Approved scenario decisions and protocol tests |
-| FR-021 Migration waves | Planned | Prioritisation and wave planner | Deterministic scenario outcomes and owner review |
-| FR-022 Governed work items | Planned | Workflow state machine and RBAC | Positive/negative transition tests and audit export |
-| FR-023 Exceptions | Planned | Expiry, approver, rationale, compensating controls | Expiry and unauthorised-approval tests |
-| FR-024 Change approval/verification | Planned | Decision and verification records | Separation-of-duties and stale-version tests |
-| FR-025 Regression detection | Planned | Post-change reconciliation | Controlled before/after scenario |
-| FR-026 Coverage reporting | Planned | Authoritative scope denominator and status model | Reconciled pilot coverage sample |
 | FR-033 Controlled delivery | Planned | Transactional outbox and authenticated adapter | Failure/retry/idempotency tests |
 | NFR-003 Privacy | Planned beyond local use | Data classification, encryption, redaction, retention | Privacy review and access-control tests |
 | NFR-004 Availability | Planned | Service SLOs, queueing, recovery design | Load, failover, restore, and game-day evidence |
@@ -64,6 +64,11 @@ completion.
 | Generated/fixture evidence cannot claim production | Evidence allowlist and reserved levels | Evidence escalation tests |
 | TLS lab cannot reach external targets | Loopback IP validation | `test_loopback_probe_refuses_external_target` |
 | Cipher/certificate does not invent KEM | Nullable transport field | Loopback TLS test |
+| Dependency graph fails closed | Topological validation and identity checks | Cycle, unknown dependency, and conflicting ownership tests |
+| Requester cannot self-approve | Version-bound workflow guard | Self-approval and stale-decision tests |
+| Exceptions expire | Exception time and state validation | Active and expired exception tests |
+| Verification requires independent pre/post evidence | Verification target, actor, criteria, and evidence gates | Complete/incomplete verification tests |
+| Coverage is not completion | Separate report objects and percentages | Separate-metrics test |
 
 ## 5. Traceability maintenance rule
 

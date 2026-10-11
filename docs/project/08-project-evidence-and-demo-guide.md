@@ -49,7 +49,7 @@ The repository currently pins `cryptography==50.0.2` and
 git diff --check
 ```
 
-Expected baseline: 46 passing tests. Do not hide failures or skips. A platform
+Expected baseline: 61 passing tests. Do not hide failures or skips. A platform
 that prevents local socket creation may block the loopback test; run that test
 in an authorised local or CI environment and record the constraint separately.
 
@@ -171,10 +171,9 @@ Decision: accept / accept with conditions / reject
 Decision authority:
 ```
 
-## 12. What proves the next stage
+## 12. Milestone 5 migration-management demonstration
 
-Milestone 5 should be considered proven only when fictional enterprise scenarios
-can demonstrate:
+The fictional enterprise scenario now demonstrates:
 
 - discovery records linked to owners and services;
 - dependency-aware planning;
@@ -184,4 +183,15 @@ can demonstrate:
 - before/after verification evidence;
 - separate coverage and migration metrics;
 - safe handling of unknowns, conflicts, cycles, expiry, and regression.
+
+Run it with:
+
+```bash
+.venv/bin/python -m crypto_control_plane.migration_cli \
+  --catalog examples/migration/fictional-enterprise.json \
+  --output build/migration-plan.json
+```
+
+The baseline must remain labelled simulated and must report discovery coverage
+separately from verified migration progress.
 

@@ -24,7 +24,7 @@ for a local reference slice and limited validation of the broader product need.
 
 ## 3. Current automated acceptance suite
 
-The baseline has 46 tests covering:
+The baseline has 61 tests covering:
 
 - schema and format conformance;
 - DNS policy normalisation and boundary behavior;
@@ -38,6 +38,8 @@ The baseline has 46 tests covering:
 - evidence-maturity enforcement;
 - loopback TLS observation and non-loopback refusal;
 - CLI output bundles.
+- fictional catalogue, ownership, dependency, target, priority, wave, decision,
+  exception, verification, and separate-metric behavior.
 
 Supported verification environments are Python 3.11-3.13 in project metadata
 and CI intent. The latest local evidence records complete passing runs on Python
@@ -135,7 +137,7 @@ Never relabel a lower level. Sanitisation must preserve the property under test,
 remove secrets and unauthorised identifiers, document transformations, and
 retain source approval outside the repository.
 
-## 8. Exit criteria for Milestone 5
+## 8. Milestone 5 verification result
 
 1. Fictional enterprise catalogue and dependency graph contracts validate.
 2. Migration work, decision, exception, and verification contracts validate.
@@ -143,6 +145,6 @@ retain source approval outside the repository.
 4. Cycles, conflicting ownership, unsupported targets, stale decisions, expired
    exceptions, and missing verification fail safely.
 5. Coverage and migration completion are reported separately.
-6. Existing 46 tests remain passing and new requirements have tests.
+6. Existing tests remain passing and the new requirements have tests.
 7. ADR, threat model, PRD, LLD, and traceability matrix are updated.
 

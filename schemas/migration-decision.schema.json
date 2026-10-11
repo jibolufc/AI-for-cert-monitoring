@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/migration-decision.schema.json",
+  "title": "PQC migration decision record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "decision_id", "work_item_id", "work_item_version", "decision_type", "actor", "decided_at", "rationale", "evidence_refs", "conditions", "expires_at"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "decision_id": {"type": "string", "format": "uuid"},
+    "work_item_id": {"type": "string", "format": "uuid"},
+    "work_item_version": {"type": "integer", "minimum": 1},
+    "decision_type": {"enum": ["approve", "reject", "defer"]},
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actor_id", "role"],
+      "properties": {
+        "actor_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "role": {"enum": ["cryptography-authority", "change-authority", "risk-owner", "independent-reviewer"]}
+      }
+    },
+    "decided_at": {"type": "string", "format": "date-time"},
+    "rationale": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 512}},
+    "conditions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 512}},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

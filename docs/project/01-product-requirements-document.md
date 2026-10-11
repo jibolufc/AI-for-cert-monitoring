@@ -5,12 +5,12 @@
 | Field | Value |
 |---|---|
 | Product | AI-assisted Cryptographic Control Plane |
-| Product version | 0.4.0 reference implementation |
+| Product version | 0.5.0 reference implementation |
 | Document status | Baseline for review |
 | Date | 2026-10-11 |
 | Product owner | To be assigned |
 | Technical owner | Repository owner |
-| Implementation status | Milestones 1-4 implemented locally |
+| Implementation status | Milestones 1-5 implemented locally |
 
 ## 2. Product statement
 
@@ -113,8 +113,8 @@ The current product is not:
 | PQC exposure assessment | Partially implemented | Policy-versioned portfolio prioritisation |
 | Real X.509 parsing | Implemented for controlled files | Sandboxed production parsing and chain verification |
 | TLS evidence | Implemented for loopback lab | Authorised scoped collectors with protocol evidence |
-| Dependency graph | Planned | Versioned service, protocol, supplier, and relying-party graph |
-| Migration workflow | Planned | Waves, tasks, approvals, exceptions, rollback, verification |
+| Dependency graph | Partially implemented with fictional catalogue | Reconciled service, protocol, supplier, and relying-party graph |
+| Migration workflow | Partially implemented as local deterministic workflow | Durable waves, tasks, approvals, exceptions, rollback, verification |
 | AI assistance | Deterministic explanation only | Evidence-grounded recommendation with evaluation and guardrails |
 | Execution | Out of scope now | Optional isolated executor after governance gates |
 
@@ -232,6 +232,15 @@ denominator, data quality, operating model, and acceptable error rates.
 10. Transport evidence does not invent negotiated key establishment.
 11. Fixtures and generated evidence cannot claim production assurance.
 12. The complete automated test suite passes on the supported Python versions.
+13. Catalogue identities, ownership, scope, and dependency graph validate.
+14. Missing evidence, stale evidence, unsupported targets, and blocked hard
+    dependencies remain explicit blockers.
+15. Migration decisions bind to an exact work-item version and prevent
+    requester self-approval.
+16. Exceptions are separate, time bounded, and include compensating controls.
+17. `verified` requires independent pre-change/post-change evidence and every
+    approved criterion to pass.
+18. Discovery coverage and migration completion are reported separately.
 
 ## 13. Dependencies and assumptions
 

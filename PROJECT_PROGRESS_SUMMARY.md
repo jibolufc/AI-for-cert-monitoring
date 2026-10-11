@@ -2,9 +2,12 @@
 
 ## Project progress summary
 
-**Project status:** Work in progress  
-**Current version:** 0.4.0  
-**Current milestone:** Milestone 4 completed  
+**Project status:** Work in progress
+
+**Current version:** 0.5.0
+
+**Current milestone:** Milestone 5 completed
+
 **Last updated:** 11 October 2026
 
 ## Project overview
@@ -68,16 +71,31 @@ verification.
 - Added controls preventing laboratory evidence from being presented as
   authenticated production evidence.
 
+### Milestone 5 — PQC migration management
+
+- Added a fictional six-service enterprise catalogue with assets, owners,
+  suppliers, business context, cryptographic uses, and dependencies.
+- Added deterministic migration priorities, waves, blockers, and function-
+  specific target compatibility.
+- Added separately versioned work-item, decision, exception, verification, and
+  coverage-report contracts.
+- Added controls for dependency cycles, ownership conflicts, evidence
+  escalation, stale decisions, self-approval, expired exceptions, and
+  incomplete or non-independent verification.
+- Added separate discovery-coverage and verified-migration measures.
+- Kept all implementation activity outside the control plane; it remains a
+  planning, governance, and verification reference implementation.
+
 ## Current evidence
 
-- Four incremental implementation milestones are recorded in Git history.
+- Five incremental implementation milestones are recorded in Git history.
 - The repository contains versioned JSON schemas, architecture decisions, a
   threat model, examples, command-line demonstrations, and automated tests.
-- The current automated suite contains **46 tests**.
+- The current automated suite contains **61 tests**.
 - The suite has passed on Python 3.12 and Python 3.13, including the real local
   TLS handshake test when run outside the restricted test sandbox.
-- The current working implementation is recorded in commit `be71182`.
-- The project documentation pack is recorded in commit `fd2d7ea`.
+- Milestone 4 is recorded in commit `be71182` and the supporting project
+  documentation is recorded in later local commits.
 
 ## Current limitations
 
@@ -101,18 +119,11 @@ change authority are introduced.
 
 ## Next planned milestone
 
-**Milestone 5 — PQC migration management** will add a fictional enterprise
-catalogue so that the migration workflow can be developed without customer
-data. Planned capabilities include:
-
-- assets, services, owners, suppliers, and business context;
-- cryptographic dependency relationships;
-- current and target cryptographic states;
-- migration priority and waves;
-- blockers and prerequisites;
-- exceptions and approval records;
-- verification criteria and post-change evidence;
-- separate reporting of discovery coverage and migration completion.
+**Milestone 6 — Evidence reconciliation and offline evidence bundle** will link
+multiple observations to catalogue records while preserving conflicts and
+lineage. It will add a customer-controlled sanitisation workflow, signed bundle
+manifest, import validation, CBOM-style export, dependency views, and local
+technical/executive reports.
 
 ## Overall position
 
@@ -123,6 +134,6 @@ tests.
 
 It should presently be described as a **working reference implementation under
 active development**, not as a finished production product. The completed work
-provides the technical foundation for building and demonstrating PQC migration
-management in the next milestone.
+now demonstrates both evidence-backed discovery and controlled PQC migration
+management using explicitly simulated enterprise data.
 

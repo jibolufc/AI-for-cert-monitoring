@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "catalog_id": "5c9ac8e8-4a5a-4b72-bf70-9d978398e284",
+  "catalog_version": 1,
+  "name": "Northstar fictional enterprise PQC planning catalogue",
+  "as_of": "2026-10-11T12:00:00Z",
+  "evidence_level": "simulated",
+  "scope": {
+    "known_asset_ids": [
+      "asset-api-01",
+      "asset-archive-01",
+      "asset-identity-01",
+      "asset-legacy-01",
+      "asset-payments-01",
+      "asset-reporting-01",
+      "asset-research-01"
+    ],
+    "in_scope_asset_ids": [
+      "asset-api-01",
+      "asset-archive-01",
+      "asset-identity-01",
+      "asset-legacy-01",
+      "asset-payments-01",
+      "asset-reporting-01"
+    ],
+    "out_of_scope_asset_ids": ["asset-research-01"]
+  },
+  "owners": [
+    {"owner_id": "owner-archive", "display_name": "Records Platform Owner", "role": "service-owner"},
+    {"owner_id": "owner-digital", "display_name": "Digital Platform Owner", "role": "service-owner"},
+    {"owner_id": "owner-finance", "display_name": "Payments Platform Owner", "role": "service-owner"},
+    {"owner_id": "owner-identity", "display_name": "Identity Platform Owner", "role": "service-owner"},
+    {"owner_id": "owner-legacy", "display_name": "Legacy Services Owner", "role": "service-owner"}
+  ],
+  "services": [
+    {
+      "service_id": "svc-identity",
+      "asset_id": "asset-identity-01",
+      "name": "Workforce identity gateway",
+      "owner_id": "owner-identity",
+      "requested_by": "owner-identity",
+      "environment": "production",
+      "business_criticality": "critical",
+      "data_classification": "confidential",
+      "protection_lifetime_months": 60,
+      "supplier": {"name": "Fictional Identity Ltd", "product": "Identity Gateway", "version": "8.4"},
+      "dependencies": [],
+      "cryptographic_uses": [
+        {
+          "use_id": "use-identity-signing",
+          "inventory_record_id": "5b48f595-6f70-4d6b-9a6f-4db3ac35c119",
+          "function": "digital-signature",
+          "protocol": "x509",
+          "current_algorithm_family": "rsa",
+          "exposure_status": "quantum-vulnerable",
+          "evidence_status": "current",
+          "evidence_level": "simulated",
+          "target_state": {"algorithm_family": "ml-dsa", "algorithm_name": "ML-DSA-65", "standard": "FIPS 204", "readiness": "supported"}
+        }
+      ]
+    },
+    {
+      "service_id": "svc-archive",
+      "asset_id": "asset-archive-01",
+      "name": "Long-term regulated archive",
+      "owner_id": "owner-archive",
+      "requested_by": "owner-archive",
+      "environment": "production",
+      "business_criticality": "high",
+      "data_classification": "restricted",
+      "protection_lifetime_months": 120,
+      "supplier": {"name": "Fictional Archive Systems", "product": "Trusted Archive", "version": "12.1"},
+      "dependencies": [{"service_id": "svc-identity", "type": "hard"}],
+      "cryptographic_uses": [
+        {
+          "use_id": "use-archive-signing",
+          "inventory_record_id": "b312d0aa-9735-4bbd-b24e-1ba8f269fc5f",
+          "function": "digital-signature",
+          "protocol": "cms",
+          "current_algorithm_family": "rsa",
+          "exposure_status": "quantum-vulnerable",
+          "evidence_status": "current",
+          "evidence_level": "simulated",
+          "target_state": {"algorithm_family": "slh-dsa", "algorithm_name": "SLH-DSA-SHA2-128s", "standard": "FIPS 205", "readiness": "supported"}
+        }
+      ]
+    },
+    {
+      "service_id": "svc-api",
+      "asset_id": "asset-api-01",
+      "name": "Customer API gateway",
+      "owner_id": "owner-digital",
+      "requested_by": "owner-digital",
+      "environment": "production",
+      "business_criticality": "high",
+      "data_classification": "confidential",
+      "protection_lifetime_months": 24,
+      "supplier": {"name": "Fictional Cloud Gateway", "product": "API Edge", "version": "6.2"},
+      "dependencies": [{"service_id": "svc-identity", "type": "hard"}],
+      "cryptographic_uses": [
+        {
+          "use_id": "use-api-key-establishment",
+          "inventory_record_id": "b696181f-e86d-458c-93fd-e80e0cf84f97",
+          "function": "key-establishment",
+          "protocol": "tls",
+          "current_algorithm_family": "elliptic-curve",
+          "exposure_status": "quantum-vulnerable",
+          "evidence_status": "current",
+          "evidence_level": "simulated",
+          "target_state": {"algorithm_family": "ml-kem", "algorithm_name": "ML-KEM-768", "standard": "FIPS 203", "readiness": "supported"}
+        }
+      ]
+    },
+    {
+      "service_id": "svc-payments",
+      "asset_id": "asset-payments-01",
+      "name": "Payment authorisation service",
+      "owner_id": "owner-finance",
+      "requested_by": "owner-finance",
+      "environment": "production",
+      "business_criticality": "critical",
+      "data_classification": "restricted",
+      "protection_lifetime_months": 84,
+      "supplier": {"name": "Fictional Payments Vendor", "product": "Payment Switch", "version": "4.7"},
+      "dependencies": [{"service_id": "svc-api", "type": "hard"}],
+      "cryptographic_uses": [
+        {
+          "use_id": "use-payments-key-establishment",
+          "inventory_record_id": "6b820013-ed90-41c0-a66f-f5f6ef86fd4e",
+          "function": "key-establishment",
+          "protocol": "tls",
+          "current_algorithm_family": "elliptic-curve",
+          "exposure_status": "quantum-vulnerable",
+          "evidence_status": "current",
+          "evidence_level": "simulated",
+          "target_state": {"algorithm_family": "hybrid", "algorithm_name": "Protocol-specific hybrid target", "standard": "Pending protocol profile", "readiness": "planned"}
+        }
+      ]
+    },
+    {
+      "service_id": "svc-legacy",
+      "asset_id": "asset-legacy-01",
+      "name": "Legacy document signing service",
+      "owner_id": "owner-legacy",
+      "requested_by": "owner-legacy",
+      "environment": "production",
+      "business_criticality": "medium",
+      "data_classification": "internal",
+      "protection_lifetime_months": 12,
+      "supplier": {"name": "Fictional Legacy Vendor", "product": "Document Signer", "version": "2.0"},
+      "dependencies": [{"service_id": "svc-identity", "type": "soft"}],
+      "cryptographic_uses": [
+        {
+          "use_id": "use-legacy-signing",
+          "inventory_record_id": "627f7b52-b87e-4f51-84f8-b51f8bb93bf8",
+          "function": "digital-signature",
+          "protocol": "proprietary",
+          "current_algorithm_family": "rsa",
+          "exposure_status": "quantum-vulnerable",
+          "evidence_status": "stale",
+          "evidence_level": "simulated",
+          "target_state": {"algorithm_family": "ml-dsa", "algorithm_name": "ML-DSA-65", "standard": "FIPS 204", "readiness": "unsupported"}
+        }
+      ]
+    },
+    {
+      "service_id": "svc-reporting",
+      "asset_id": "asset-reporting-01",
+      "name": "Regulatory reporting portal",
+      "owner_id": "owner-finance",
+      "requested_by": "owner-finance",
+      "environment": "production",
+      "business_criticality": "unknown",
+      "data_classification": "confidential",
+      "protection_lifetime_months": null,
+      "supplier": {"name": "Internal", "product": "Reporting Portal", "version": "unknown"},
+      "dependencies": [{"service_id": "svc-payments", "type": "hard"}],
+      "cryptographic_uses": [
+        {
+          "use_id": "use-reporting-authentication",
+          "inventory_record_id": null,
+          "function": "certificate-authentication",
+          "protocol": "x509",
+          "current_algorithm_family": "unknown",
+          "exposure_status": "unknown",
+          "evidence_status": "missing",
+          "evidence_level": "simulated",
+          "target_state": {"algorithm_family": "unknown", "algorithm_name": "Undecided", "standard": "Undecided", "readiness": "unknown"}
+        }
+      ]
+    }
+  ]
+}

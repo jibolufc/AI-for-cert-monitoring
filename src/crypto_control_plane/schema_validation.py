@@ -16,6 +16,12 @@ SCHEMA_FILES = {
     "detection-alert": "detection-alert.schema.json",
     "monitoring-policy": "monitoring-policy.schema.json",
     "ct-observation-page": "ct-observation-page.schema.json",
+    "enterprise-catalog": "enterprise-catalog.schema.json",
+    "migration-work-item": "migration-work-item.schema.json",
+    "migration-decision": "migration-decision.schema.json",
+    "migration-exception": "migration-exception.schema.json",
+    "migration-verification": "migration-verification.schema.json",
+    "migration-coverage-report": "migration-coverage-report.schema.json",
 }
 
 

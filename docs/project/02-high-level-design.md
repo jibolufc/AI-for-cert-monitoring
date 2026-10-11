@@ -43,11 +43,11 @@ Supplier evidence ───────┘        Policy assessment      Migrati
 | Evidence ledger | Preserve raw observation, digest, provenance, outcome, and lineage | SQLite reference implementation |
 | Normalisation service | Convert source-specific data into canonical observations | Certificate path implemented |
 | Inventory service | Produce cryptographic-use records with coverage limits | Certificate slice implemented |
-| Correlation and graph service | Link assets, services, identities, dependencies, suppliers, and relying parties | Planned |
+| Correlation and graph service | Link assets, services, identities, dependencies, suppliers, and relying parties | Fictional dependency graph implemented; source reconciliation planned |
 | Policy and assessment service | Classify exposure, missing context, priority gates, and policy findings | Deterministic certificate/PQC slice implemented |
 | Detection service | Produce operational alerts and playbook links | CERT-001 implemented |
 | AI advisory service | Summarise evidence, suggest questions or plans, never silently decide | Deterministic fallback only |
-| Migration workflow | Manage target state, waves, owners, approvals, exceptions, and verification | Planned |
+| Migration workflow | Manage target state, waves, owners, approvals, exceptions, and verification | Local deterministic reference workflow implemented |
 | Reporting and API | Expose coverage, evidence maturity, exposure, work, and audit history | Planned |
 | Execution adapter | Apply narrowly approved changes with rollback and evidence | Out of scope until governance gates pass |
 

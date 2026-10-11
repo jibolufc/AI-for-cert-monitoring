@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/migration-coverage-report.schema.json",
+  "title": "Separate discovery coverage and migration progress report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "report_id", "catalog_id", "catalog_version", "as_of", "evidence_level", "discovery_coverage", "migration_progress", "limitations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "report_id": {"type": "string", "format": "uuid"},
+    "catalog_id": {"type": "string", "format": "uuid"},
+    "catalog_version": {"type": "integer", "minimum": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "evidence_level": {"enum": ["simulated", "sanitised-capture", "authenticated-production", "independently-verified"]},
+    "discovery_coverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["known_assets", "in_scope_assets", "observed_assets", "unknown_assets", "out_of_scope_assets", "coverage_percent"],
+      "properties": {
+        "known_assets": {"type": "integer", "minimum": 0},
+        "in_scope_assets": {"type": "integer", "minimum": 0},
+        "observed_assets": {"type": "integer", "minimum": 0},
+        "unknown_assets": {"type": "integer", "minimum": 0},
+        "out_of_scope_assets": {"type": "integer", "minimum": 0},
+        "coverage_percent": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "migration_progress": {
+      "type": "object", "additionalProperties": false,
+      "required": ["total_uses", "blocked", "approval_required", "approved", "rejected", "verification_required", "verified", "excepted", "regressed", "verified_percent"],
+      "properties": {
+        "total_uses": {"type": "integer", "minimum": 0},
+        "blocked": {"type": "integer", "minimum": 0},
+        "approval_required": {"type": "integer", "minimum": 0},
+        "approved": {"type": "integer", "minimum": 0},
+        "rejected": {"type": "integer", "minimum": 0},
+        "verification_required": {"type": "integer", "minimum": 0},
+        "verified": {"type": "integer", "minimum": 0},
+        "excepted": {"type": "integer", "minimum": 0},
+        "regressed": {"type": "integer", "minimum": 0},
+        "verified_percent": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}
