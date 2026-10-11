@@ -22,6 +22,10 @@ SCHEMA_FILES = {
     "migration-exception": "migration-exception.schema.json",
     "migration-verification": "migration-verification.schema.json",
     "migration-coverage-report": "migration-coverage-report.schema.json",
+    "reconciled-evidence": "reconciled-evidence.schema.json",
+    "offline-evidence-bundle": "offline-evidence-bundle.schema.json",
+    "pilot-authorisation": "pilot-authorisation.schema.json",
+    "integration-proposal": "integration-proposal.schema.json",
 }
 
 

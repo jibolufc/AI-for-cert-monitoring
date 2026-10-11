@@ -5,12 +5,12 @@
 | Field | Value |
 |---|---|
 | Product | AI-assisted Cryptographic Control Plane |
-| Product version | 0.5.0 reference implementation |
+| Product version | 0.9.0 reference implementation |
 | Document status | Baseline for review |
 | Date | 2026-10-11 |
 | Product owner | To be assigned |
 | Technical owner | Repository owner |
-| Implementation status | Milestones 1-5 implemented locally |
+| Implementation status | Milestones 1-6 implemented locally; Milestones 7-9 safe reference foundations with external gates open |
 
 ## 2. Product statement
 
@@ -241,6 +241,17 @@ denominator, data quality, operating model, and acceptable error rates.
 17. `verified` requires independent pre-change/post-change evidence and every
     approved criterion to pass.
 18. Discovery coverage and migration completion are reported separately.
+19. Reconciliation retains every source record and labels contradictory states.
+20. Sanitisation and bundle signing do not increase evidence maturity.
+21. Offline import detects altered names, sizes, hashes, manifests, or signatures.
+22. Pilot measurement requires current, independent, read-only authorisation and
+    rejects records outside its asset denominator.
+23. Tenant workflow access, approval role, separation of duties, and expected
+    object version are enforced before state change.
+24. Audit and outbox records are committed with the workflow transition.
+25. Integration records remain approval-required proposals with no execution
+    authority, and mutating cryptographic operations are rejected.
+26. The reference release reports production gates as open.
 
 ## 13. Dependencies and assumptions
 

@@ -2,7 +2,7 @@
 
 ## 1. Scope
 
-This LLD documents the implemented version 0.5.0 reference slice and marks
+This LLD documents the implemented version 0.9.0 reference slice and marks
 future interfaces as proposed. It should be updated whenever a schema version,
 security invariant, persistence rule, or public command changes.
 
@@ -299,4 +299,22 @@ unknown-field rates, evidence age, coverage gaps, workflow ageing, expired
 exceptions, and verification regressions. Logs must use correlation IDs and
 avoid leaking full certificate identities or infrastructure metadata by
 default.
+
+## 16. Implemented Milestones 6 to 9 reference types
+
+- `EvidenceReconciler` groups inventory observations by asset, function, and
+  protocol; retains all source IDs; deterministically identifies the latest
+  record; and emits explicit conflict lineage.
+- `OfflineEvidenceBundle` sanitises selected identity fields, hashes canonical
+  artifacts, signs the manifest with Ed25519, and verifies names, sizes, hashes,
+  and signature. Evidence maturity is never derived from signer trust.
+- `PilotGate` validates a time-bounded read-only scope, independent approval,
+  source-authentication consistency, and denominator-based coverage.
+- `ControlPlaneStore` demonstrates tenant-qualified keys, expected-version
+  updates, separation of duties, audit, and outbox writes in one SQLite
+  transaction.
+- `IntegrationProposalService` produces approval-required records with no
+  execution authority and rejects cryptographic or deployment mutation verbs.
+- `roadmap_cli` builds the complete local reference evidence set and writes
+  `production_gates_passed: false`.
 

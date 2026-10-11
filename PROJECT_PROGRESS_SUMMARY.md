@@ -4,9 +4,9 @@
 
 **Project status:** Work in progress
 
-**Current version:** 0.5.0
+**Current version:** 0.9.0
 
-**Current milestone:** Milestone 5 completed
+**Current milestone:** Milestone 6 implemented; Milestones 7-9 reference foundations implemented with external gates open
 
 **Last updated:** 11 October 2026
 
@@ -86,14 +86,49 @@ verification.
 - Kept all implementation activity outside the control plane; it remains a
   planning, governance, and verification reference implementation.
 
+### Milestone 6 — Evidence reconciliation and offline exchange
+
+- Added deterministic multi-observation correlation that retains all record IDs
+  and exposes contradictory algorithm states.
+- Added CBOM-style and dependency-graph exports.
+- Added field-level sanitisation that preserves cryptographic properties without
+  upgrading evidence maturity.
+- Added Ed25519 manifest signing and import validation. Embedded self-signed
+  keys establish local integrity only; signer trust is separate.
+
+### Milestone 7 — Authorised pilot reference gate
+
+- Added time-bounded, independently approved, read-only scope contracts.
+- Added fail-closed expiry, self-authorisation, source-authentication, and asset-
+  scope checks.
+- Added denominator-based coverage reporting. The included run is simulated and
+  does not claim that a real pilot has taken place.
+
+### Milestone 8 — Production control-plane reference foundation
+
+- Added tenant-scoped workflow persistence, optimistic version enforcement,
+  role checks, separation of duties, audit records, and transactional outbox
+  records in local SQLite.
+- Production identity, availability, recovery, SLO, privacy, and independent
+  assurance gates remain open.
+
+### Milestone 9 — Proposal-only integration boundary
+
+- Added validated proposals for ticketing, CMDB, PKI, KMS/HSM, and deployment-
+  evidence integration families.
+- All proposals have `execution_authority: none`; cryptographic and deployment
+  mutations are rejected.
+
 ## Current evidence
 
-- Five incremental implementation milestones are recorded in Git history.
+- Nine roadmap milestones are represented in the reference design; Milestones
+  7-9 retain explicit external acceptance gates.
 - The repository contains versioned JSON schemas, architecture decisions, a
   threat model, examples, command-line demonstrations, and automated tests.
-- The current automated suite contains **61 tests**.
-- The suite has passed on Python 3.12 and Python 3.13, including the real local
-  TLS handshake test when run outside the restricted test sandbox.
+- The current automated suite contains **75 tests**.
+- The current full run passes on Python 3.13. The loopback TLS test passes when
+  run outside the restricted test sandbox. A fresh 3.12 run remains pending a
+  test environment containing the pinned project dependencies.
 - Milestone 4 is recorded in commit `be71182` and the supporting project
   documentation is recorded in later local commits.
 
@@ -107,7 +142,7 @@ It does not currently:
 - provide authenticated production collectors;
 - discover every form of cryptography used in applications, code, KMS, HSM,
   private PKI, cloud services, or supplier products;
-- operate as a multi-user or multi-tenant production service;
+- operate as a production multi-user or multi-tenant service;
 - execute certificate, key, trust-store, or production migration changes;
 - prove that an organisation is quantum-safe;
 - carry independent certification, audit, or penetration-test assurance.
@@ -117,13 +152,13 @@ the data contracts, evidence boundaries, deterministic assessment rules, safety
 controls, and migration-management design before production integrations or
 change authority are introduced.
 
-## Next planned milestone
+## Next external validation gates
 
-**Milestone 6 — Evidence reconciliation and offline evidence bundle** will link
-multiple observations to catalogue records while preserving conflicts and
-lineage. It will add a customer-controlled sanitisation workflow, signed bundle
-manifest, import validation, CBOM-style export, dependency views, and local
-technical/executive reports.
+The next work is evidence, not another feature milestone: obtain written pilot
+authority and a bounded read-only source; validate an external signer trust
+registry; review privacy and retention; select a production identity/tenant
+architecture; demonstrate backup, recovery, SLOs, and independent security
+testing; then review each proposed adapter before granting any authority.
 
 ## Overall position
 
@@ -135,5 +170,7 @@ tests.
 It should presently be described as a **working reference implementation under
 active development**, not as a finished production product. The completed work
 now demonstrates both evidence-backed discovery and controlled PQC migration
-management using explicitly simulated enterprise data.
+management using explicitly simulated enterprise data. It also demonstrates the
+safe architecture of later roadmap stages without claiming their external gates
+have been passed.
 

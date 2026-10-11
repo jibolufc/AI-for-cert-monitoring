@@ -1,4 +1,4 @@
-# Threat model: Milestones 1 to 5
+# Threat model: Milestones 1 to 9 reference release
 
 ## Assets
 
@@ -121,12 +121,44 @@ audit record.
 21. Discovery coverage and migration completion remain separate measures.
 22. The migration workflow performs no production change.
 
+## Milestones 6 to 9 threat-model delta
+
+### New assets
+
+- reconciliation lineage and conflict state;
+- offline bundle manifest, signature, public key, and sanitised artifacts;
+- pilot authorisation, scope denominator, expiry, and stop conditions;
+- tenant identifiers, workflow versions, audit events, and outbox records;
+- integration proposals and evidence references.
+
+### New threats and controls
+
+| Threat | Required control |
+|---|---|
+| Conflict laundering | Retain every source record and label contradictory states; canonical selection is not truth resolution |
+| Sanitisation interpreted as stronger evidence | Preserve the weakest enclosed evidence level and report sanitisation separately |
+| Self-signed bundle treated as authenticated source | Verify integrity but report signer trust separately; no automatic evidence upgrade |
+| Bundle artifact tampering | Verify exact manifest names, canonical sizes, SHA-256 digests, and Ed25519 signature |
+| Pilot scope creep or expired authority | Read-only authorisation, independent approver, explicit assets, validity window, and stop conditions |
+| Cross-tenant object access | Tenant included in every workflow primary key and lookup |
+| Lost update or replayed approval | Expected-version transition and audit/outbox event in one transaction |
+| Self-approval or unauthorised role | Role gate plus requester/approver separation |
+| Proposal mistaken for execution authority | Schema fixes status to approval-required and execution authority to none |
+| Direct PKI/KMS/HSM mutation | Reject issue, revoke, rotate, delete, deploy, trust-change, and generic execute operations |
+
+### Residual risk
+
+The reference controls do not establish production identity assurance, database
+row-level security, high availability, disaster recovery, secure key custody,
+privacy compliance, connector credential safety, or external penetration-test
+assurance. Those remain Gate G3-G5 evidence requirements.
+
 ## Out of scope
 
-Production authentication/authorization, multi-tenancy, service availability,
-live X.509 parsing, CA validation, CT wire parsing/proof verification, source
-authentication, distributed event delivery, transactional SIEM outbox,
-production SIEM authentication, authoritative CMDB enrichment, dependency-graph
-reconciliation, Internet or enterprise-network scanning, authenticated
-production discovery, non-certificate discovery, durable multi-user workflow,
-production approval identity, and remediation/orchestration.
+Production authentication/authorization, production multi-tenancy and service
+availability, CA validation, CT wire parsing/proof verification, source
+authentication, distributed event delivery, production SIEM authentication,
+authoritative CMDB enrichment, Internet or enterprise-network scanning,
+authenticated production discovery, non-certificate discovery, durable
+multi-user operations, production approval identity, connector credentials,
+and remediation/orchestration.

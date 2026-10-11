@@ -5,11 +5,11 @@
 **Product goal:** Evidence-backed cryptographic discovery and post-quantum
 cryptography (PQC) migration management
 
-**Document baseline:** Version 0.5.0, Milestones 1-5
+**Document baseline:** Version 0.9.0, Milestones 1-9 reference release
 
 **Prepared:** 2026-10-11
 
-**Implementation baseline:** Milestone 5 local branch; record the reviewed commit SHA when distributing the pack
+**Implementation baseline:** Local reference release; record the reviewed commit SHA when distributing the pack
 
 ## Purpose
 
@@ -49,7 +49,7 @@ Every material claim should use one of these states:
 
 Related engineering records:
 
-- `docs/architecture/ADR-001` through `ADR-005`: accepted architecture decisions
+- `docs/architecture/ADR-001` through `ADR-006`: accepted architecture decisions
 - `docs/threat-model/THREAT_MODEL.md`: detailed threat inventory and invariants
 - `schemas/`: machine-readable interface contracts
 - `tests/`: executable verification evidence
@@ -65,13 +65,15 @@ The strongest current project evidence is:
 4. Automated tests across supported Python versions.
 5. Real, locally generated X.509 artifacts and a loopback TLS handshake.
 6. Explicit evidence-maturity labels and coverage limitations.
+7. Conflict-preserving reconciliation and signed offline-bundle validation.
+8. Tenant, separation-of-duties, audit, outbox, and proposal-only integration tests.
 
 The current project does **not** yet have:
 
 - authenticated production collectors;
 - customer or enterprise asset coverage;
 - authoritative CMDB, PKI, KMS, HSM, IAM, or supplier integrations;
-- multi-tenant security or production service availability;
+- validated production multi-tenant security or service availability;
 - a durable multi-user migration workflow, production approval identity, or executor;
 - an independent penetration test or external assurance report.
 
@@ -81,6 +83,6 @@ The current project does **not** yet have:
 2. Inspect the traceability matrix.
 3. Run the demonstration guide and tests.
 4. Review the LLD and threat model.
-5. Decide whether the next gate is evidence reconciliation, an offline evidence
-   bundle, or preparation for an authorised read-only pilot.
+5. Decide whether sufficient external evidence exists to authorise a bounded
+   read-only pilot; do not infer this from the simulated reference run.
 

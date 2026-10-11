@@ -24,7 +24,7 @@ for a local reference slice and limited validation of the broader product need.
 
 ## 3. Current automated acceptance suite
 
-The baseline has 61 tests covering:
+The baseline has 75 tests covering:
 
 - schema and format conformance;
 - DNS policy normalisation and boundary behavior;
@@ -147,4 +147,17 @@ retain source approval outside the repository.
 5. Coverage and migration completion are reported separately.
 6. Existing tests remain passing and the new requirements have tests.
 7. ADR, threat model, PRD, LLD, and traceability matrix are updated.
+
+## 9. Milestones 6 to 9 reference verification result
+
+1. Reconciliation is deterministic, retains lineage, and reports conflicts.
+2. Sanitisation preserves algorithm properties and does not upgrade evidence.
+3. Offline bundle round-trip verification passes and artifact tampering fails.
+4. Trusted and self-signed signer states remain separate from evidence level.
+5. Pilot scope, expiry, self-authorisation, and out-of-scope records fail safely.
+6. Tenant-scoped workflow writes audit and outbox records transactionally.
+7. Role, separation-of-duties, and expected-version controls fail closed.
+8. Proposal-only integrations reject mutation operations.
+9. The complete suite contains 75 tests; production gates remain explicitly
+   false because this is simulated local evidence.
 

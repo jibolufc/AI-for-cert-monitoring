@@ -195,3 +195,23 @@ Run it with:
 The baseline must remain labelled simulated and must report discovery coverage
 separately from verified migration progress.
 
+## 13. Milestones 6 to 9 reference-release demonstration
+
+Run:
+
+```bash
+.venv/bin/python -m crypto_control_plane.roadmap_cli \
+  --event examples/events/known-domain-issued.json \
+  --event examples/events/unknown-domain-issued.json \
+  --output-dir build/reference-release
+```
+
+Review `summary.json`, `reconciliation.json`, `cbom.json`,
+`dependency-graph.json`, `offline-bundle.json`, `bundle-verification.json`,
+`pilot-report.json`, `control-plane-reference.json`, and
+`integration-proposal.json`.
+
+Acceptance evidence includes verified bundle integrity, untrusted self-signed
+signer status, simulated pilot status, tenant-scoped audit/outbox counts, no
+integration execution authority, and `production_gates_passed: false`.
+

@@ -43,7 +43,7 @@ Supplier evidence ───────┘        Policy assessment      Migrati
 | Evidence ledger | Preserve raw observation, digest, provenance, outcome, and lineage | SQLite reference implementation |
 | Normalisation service | Convert source-specific data into canonical observations | Certificate path implemented |
 | Inventory service | Produce cryptographic-use records with coverage limits | Certificate slice implemented |
-| Correlation and graph service | Link assets, services, identities, dependencies, suppliers, and relying parties | Fictional dependency graph implemented; source reconciliation planned |
+| Correlation and graph service | Link assets, services, identities, dependencies, suppliers, and relying parties | Local conflict-preserving reconciliation and fictional dependency graph implemented; authoritative sources open |
 | Policy and assessment service | Classify exposure, missing context, priority gates, and policy findings | Deterministic certificate/PQC slice implemented |
 | Detection service | Produce operational alerts and playbook links | CERT-001 implemented |
 | AI advisory service | Summarise evidence, suggest questions or plans, never silently decide | Deterministic fallback only |
@@ -182,8 +182,8 @@ The local SQLite store demonstrates semantics, not these service levels.
 2. Replay-safe evidence intake before live collection — ADR-002.
 3. Inventory and PQC assessment remain separate artifacts — ADR-003.
 4. Real controlled discovery without misrepresenting lab data — ADR-004.
-5. Proposed next ADR: migration-work-item state machine and decision authority.
-6. Proposed next ADR: authenticated collector identity and evidence signing.
+5. Deterministic migration governance without execution authority — ADR-005.
+6. Safe reconciliation, bundle, pilot, tenancy, and integration foundations — ADR-006.
 
 ## 11. Architecture limitations
 
@@ -191,4 +191,12 @@ The current architecture does not prove complete discovery, chain validation,
 runtime KEM negotiation, application compatibility, supplier readiness, scale,
 tenant isolation, service availability, or production security. Those are
 explicit future validation gates.
+
+## 12. Version 0.9 reference-release components
+
+The `roadmap` component adds four bounded layers: evidence reconciliation and
+offline exchange; pilot-authorisation checks; tenant-scoped workflow/audit/
+outbox persistence; and proposal-only integration records. Trust remains
+asymmetric: an offline signer can protect integrity without proving observation
+truth, and an approved proposal conveys no execution authority.
 

@@ -7,7 +7,8 @@ not its final product boundary. It is deliberately **not** a certificate
 authority, key-management service, migration executor, or autonomous remediation
 system.
 
-The first five milestones are executable end to end:
+Milestones 1 through 6 and the safe reference foundations for Milestones 7
+through 9 are executable end to end:
 
 ```text
 certificate event
@@ -46,6 +47,15 @@ fictional enterprise catalogue
   -> version-bound decisions and time-bounded exceptions
   -> independent post-change verification gate
   -> separate discovery coverage and migration progress
+
+inventory observations
+  -> conflict-preserving reconciliation
+  -> CBOM-style + dependency graph exports
+  -> sanitisation without evidence escalation
+  -> Ed25519 manifest integrity for offline exchange
+  -> bounded simulated pilot measurement
+  -> tenant-scoped workflow + audit + transactional outbox
+  -> proposal-only integrations with no execution authority
 ```
 
 ## Trust boundary
@@ -104,6 +114,12 @@ python3 -m venv .venv
 .venv/bin/python -m crypto_control_plane.migration_cli \
   --catalog examples/migration/fictional-enterprise.json \
   --output build/migration-plan.json
+
+# Build the safe Milestones 6-9 reference evidence set.
+.venv/bin/python -m crypto_control_plane.roadmap_cli \
+  --event examples/events/known-domain-issued.json \
+  --event examples/events/unknown-domain-issued.json \
+  --output-dir build/reference-release
 ```
 
 The example produces a `CERT-001` alert because `lookalike-example.net` is not
@@ -199,3 +215,27 @@ Recommended next gates are:
 3. Add local graph and portfolio reports without implying production coverage.
 4. Obtain explicit authorisation before designing the first read-only pilot
    collector.
+
+## Milestones 6 to 9: safe reference release
+
+Version 0.9 adds executable foundations for the rest of the roadmap:
+
+1. **Milestone 6 implemented locally:** multi-observation reconciliation with
+   conflict lineage, sanitisation, CBOM-style and dependency exports, and
+   Ed25519-signed offline bundles. Bundle integrity, signer trust, and evidence
+   maturity remain separate.
+2. **Milestone 7 reference gate:** a time-bounded, independently approved,
+   read-only scope contract and denominator-based coverage report. The included
+   demonstration is simulated; no real pilot has been authorised or run.
+3. **Milestone 8 reference foundation:** tenant-scoped SQLite workflow state,
+   optimistic version checks, role and separation-of-duties enforcement, audit,
+   and transactional outbox records. This is not a production topology.
+4. **Milestone 9 proposal boundary:** ticketing, CMDB, PKI, KMS/HSM, and
+   deployment-evidence adapters can be represented as evidence-bound proposals.
+   Issuance, revocation, rotation, deletion, deployment, trust changes, and
+   generic execution are rejected.
+
+The reference-release summary always reports `production_gates_passed: false`.
+Real Gate G3-G5 closure still requires external authorisation, authenticated
+sources, privacy/security review, service operations, recovery and SLO evidence,
+independent testing, and adapter-specific approval.

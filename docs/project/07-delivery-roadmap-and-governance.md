@@ -9,13 +9,17 @@
 | 3 | Cryptographic inventory and deterministic PQC exposure | Commit `887fdb3`, ADR-003, inventory tests |
 | 4 | Controlled real X.509 and loopback TLS discovery lab | Commit `be71182`, ADR-004, discovery tests |
 | 5 | Deterministic migration planning and governance using a fictional enterprise | ADR-005, migration schemas, planner/workflow tests |
+| 6 | Conflict-preserving reconciliation and integrity-protected offline evidence | ADR-006, roadmap module, bundle tests |
+| 7 | Read-only pilot authorisation and measurement reference gate | ADR-006, pilot schema and negative tests |
+| 8 | Tenant-scoped workflow, audit, and outbox reference foundation | ADR-006, SQLite transaction and isolation tests |
+| 9 | Proposal-only integration boundary | ADR-006, proposal schema and mutation rejection tests |
 
 These commits are local project evidence unless and until deliberately pushed
 and reviewed on GitHub.
 
-## 2. Recommended roadmap
+## 2. Reference implementation status and external gates
 
-### Milestone 6 — Evidence reconciliation and offline bundle
+### Milestone 6 — Evidence reconciliation and offline bundle: locally implemented
 
 - multi-observation correlation with conflict lineage;
 - CBOM-style export and dependency graph views;
@@ -23,10 +27,10 @@ and reviewed on GitHub.
 - signed manifest, import validation, and data-quality report;
 - report generation for technical and executive audiences.
 
-Exit: realistic data can be exchanged and assessed without uncontrolled direct
-connectivity.
+Local exit met with simulated/generated data. External trust establishment and
+customer acceptance remain open.
 
-### Milestone 7 — Authorised read-only pilot
+### Milestone 7 — Authorised read-only pilot: reference gate implemented
 
 - select one bounded source and obtain written authorisation;
 - implement collector authentication and scope policy;
@@ -34,10 +38,10 @@ connectivity.
 - operate read-only, measure quality, and report unknowns;
 - perform privacy and security review.
 
-Exit: evidence-backed pilot report with measured, not assumed, coverage and
-error rates.
+Real exit open: written authority, bounded source, authenticated collection,
+privacy/security review, and measured real-world error rates are absent.
 
-### Milestone 8 — Production control-plane foundation
+### Milestone 8 — Production control-plane foundation: local reference implemented
 
 - tenant and identity architecture;
 - durable stream, evidence storage, transactional workflow, and outbox;
@@ -45,16 +49,17 @@ error rates.
 - SLOs, recovery, observability, secure delivery pipeline;
 - independent security testing.
 
-Exit: approved production service for discovery and migration governance, still
-without autonomous cryptographic changes.
+Real exit open: no approved production identity, service, SLO, recovery test,
+secure-delivery evidence, or independent security assessment exists.
 
-### Milestone 9 — Optional controlled integrations
+### Milestone 9 — Optional controlled integrations: proposal boundary implemented
 
 - integrate ticketing, CMDB, PKI, KMS/HSM, and deployment evidence;
 - add narrowly scoped action proposals or external change triggers;
 - consider isolated execution only after a separate risk decision.
 
-Exit: verified end-to-end organisational workflow with explicit authority.
+Real exit open: no organisational adapter is connected or authorised. Every
+reference proposal has no execution authority.
 
 ## 3. Governance roles
 
@@ -124,13 +129,14 @@ Material changes require an ADR when they alter:
 - workflow states and approval rules;
 - production deployment or external integrations.
 
-## 8. Immediate next backlog
+## 8. Immediate external-evidence backlog
 
-1. Define observation-to-catalogue reconciliation and conflict-lineage rules.
-2. Add a signed offline evidence-bundle contract and import validator.
-3. Add sanitisation controls that preserve the properties under test.
-4. Produce CBOM-style and dependency-graph exports.
-5. Generate local technical and executive reports from the same evidence.
-6. Extend the threat model and traceability matrix.
-7. Run the full suite on Python 3.11, 3.12, and 3.13.
+1. Obtain written authorisation for one bounded read-only source.
+2. Approve source authentication, privacy, retention, and stop controls.
+3. Establish an external signer trust registry for bundle import.
+4. Select and validate production identity and tenant isolation architecture.
+5. Demonstrate backup, recovery, observability, SLOs, and secure delivery.
+6. Commission independent security testing.
+7. Review each integration adapter and its credentials separately.
+8. Run the full suite on Python 3.11, 3.12, and 3.13.
 
