@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "log_id": "example-ct-log",
+  "page_after_cursor": null,
+  "next_cursor": "1",
+  "collected_at": "2026-10-11T10:00:01Z",
+  "entries": [
+    {
+      "index": 0,
+      "observed_at": "2026-10-11T10:00:00Z",
+      "source_uri": "https://ct.example.invalid/logs/example/entries/0",
+      "certificate": {
+        "fingerprint_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "serial_number": "1000",
+        "subject": "CN=api.example.com",
+        "issuer": "CN=Example CT Test Issuer",
+        "san_dns_names": ["api.example.com"],
+        "not_before": "2026-10-11T09:55:00Z",
+        "not_after": "2027-01-09T09:55:00Z"
+      }
+    }
+  ]
+}

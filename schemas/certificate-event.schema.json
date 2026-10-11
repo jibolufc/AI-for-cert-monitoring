@@ -4,9 +4,9 @@
   "title": "Canonical certificate event",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "context", "evidence"],
+  "required": ["schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "context", "evidence", "provenance"],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"const": "1.1"},
     "event_id": {"type": "string", "format": "uuid"},
     "event_type": {"enum": ["certificate.issued", "certificate.observed"]},
     "observed_at": {"type": "string", "format": "date-time"},
@@ -57,6 +57,19 @@
         "observed_by": {"type": "string", "minLength": 1, "maxLength": 256},
         "collected_at": {"type": "string", "format": "date-time"},
         "uri": {"type": "string", "format": "uri", "maxLength": 2048}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "cursor"],
+      "properties": {
+        "collector_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "collector_version": {"type": "string", "minLength": 1, "maxLength": 32},
+        "source_record_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "payload_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "verification_state": {"enum": ["verified", "unverified", "failed"]},
+        "cursor": {"type": "string", "minLength": 1, "maxLength": 256}
       }
     }
   }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any
 
 from .errors import ValidationError
@@ -39,18 +40,19 @@ class CertificateEvent:
     not_after: str
     environment: str
     evidence: dict[str, Any]
+    provenance: dict[str, Any]
 
     @classmethod
     def from_dict(cls, payload: Any) -> "CertificateEvent":
         root = require_mapping(payload, "event")
         require_exact_keys(
             root,
-            {"schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "context", "evidence"},
+            {"schema_version", "event_id", "event_type", "observed_at", "source", "certificate", "context", "evidence", "provenance"},
             set(),
             "event",
         )
-        if root["schema_version"] != "1.0":
-            raise ValidationError("event.schema_version must be '1.0'")
+        if root["schema_version"] != "1.1":
+            raise ValidationError("event.schema_version must be '1.1'")
         event_type = require_string(root["event_type"], "event.event_type", maximum=64)
         if event_type not in EVENT_TYPES:
             raise ValidationError("event.event_type is unsupported")
@@ -92,9 +94,26 @@ class CertificateEvent:
         if "uri" in evidence:
             require_string(evidence["uri"], "event.evidence.uri", maximum=2048)
 
+        provenance = require_mapping(root["provenance"], "event.provenance")
+        require_exact_keys(
+            provenance,
+            {"collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "cursor"},
+            set(),
+            "event.provenance",
+        )
+        require_string(provenance["collector_id"], "event.provenance.collector_id", maximum=128)
+        require_string(provenance["collector_version"], "event.provenance.collector_version", maximum=32)
+        require_string(provenance["source_record_id"], "event.provenance.source_record_id", maximum=512)
+        payload_sha256 = require_string(provenance["payload_sha256"], "event.provenance.payload_sha256", maximum=64)
+        if len(payload_sha256) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in payload_sha256):
+            raise ValidationError("event.provenance.payload_sha256 must contain 64 hexadecimal characters")
+        if provenance["verification_state"] not in {"verified", "unverified", "failed"}:
+            raise ValidationError("event.provenance.verification_state is unsupported")
+        require_string(provenance["cursor"], "event.provenance.cursor", maximum=256)
+
         return cls(
             raw=dict(root),
-            schema_version="1.0",
+            schema_version="1.1",
             event_id=require_uuid(root["event_id"], "event.event_id"),
             event_type=event_type,
             observed_at=require_timestamp(root["observed_at"], "event.observed_at"),
@@ -111,6 +130,7 @@ class CertificateEvent:
             not_after=not_after,
             environment=environment,
             evidence=dict(evidence),
+            provenance=dict(provenance),
         )
 
 
@@ -123,15 +143,27 @@ def _timestamp_value(text: str):
 @dataclass(frozen=True)
 class MonitoringPolicy:
     schema_version: str
+    policy_id: str
+    policy_version: int
     allowed_dns_names: tuple[str, ...]
     allowed_dns_suffixes: tuple[str, ...]
 
     @classmethod
     def from_dict(cls, payload: Any) -> "MonitoringPolicy":
         root = require_mapping(payload, "policy")
-        require_exact_keys(root, {"schema_version", "allowed_dns_names", "allowed_dns_suffixes"}, set(), "policy")
-        if root["schema_version"] != "1.0":
-            raise ValidationError("policy.schema_version must be '1.0'")
+        require_exact_keys(
+            root,
+            {"schema_version", "policy_id", "policy_version", "allowed_dns_names", "allowed_dns_suffixes"},
+            set(),
+            "policy",
+        )
+        if root["schema_version"] != "1.1":
+            raise ValidationError("policy.schema_version must be '1.1'")
+        policy_id = require_string(root["policy_id"], "policy.policy_id", maximum=128)
+        if re.fullmatch(r"[a-z0-9][a-z0-9._-]*", policy_id) is None:
+            raise ValidationError("policy.policy_id has an invalid format")
+        if not isinstance(root["policy_version"], int) or isinstance(root["policy_version"], bool) or root["policy_version"] < 1:
+            raise ValidationError("policy.policy_version must be a positive integer")
         names = require_string_list(root["allowed_dns_names"], "policy.allowed_dns_names")
         suffixes = require_string_list(root["allowed_dns_suffixes"], "policy.allowed_dns_suffixes")
         if not names and not suffixes:
@@ -139,7 +171,9 @@ class MonitoringPolicy:
         from .normalization import normalize_dns_name
 
         return cls(
-            schema_version="1.0",
+            schema_version="1.1",
+            policy_id=policy_id,
+            policy_version=root["policy_version"],
             allowed_dns_names=tuple(normalize_dns_name(item, allow_wildcard=False) for item in names),
             allowed_dns_suffixes=tuple(normalize_dns_name(item, allow_wildcard=False) for item in suffixes),
         )

@@ -6,3 +6,6 @@ build/
 dist/
 *.egg-info/
 .venv/
+*.sqlite
+*.sqlite-journal
+*.jsonl

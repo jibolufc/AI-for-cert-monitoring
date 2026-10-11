@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crypto-control-plane"
-version = "0.1.0"
+version = "0.2.0"
 description = "Governed certificate monitoring reference implementation"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["jsonschema[format-nongpl]==4.26.0"]
 
 [project.scripts]
 crypto-control-plane = "crypto_control_plane.cli:main"
+crypto-control-plane-ct-fixture = "crypto_control_plane.ct_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

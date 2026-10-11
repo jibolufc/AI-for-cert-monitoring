@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/monitoring-policy.schema.json",
+  "title": "Certificate monitoring policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "policy_version", "allowed_dns_names", "allowed_dns_suffixes"],
+  "properties": {
+    "schema_version": {"const": "1.1"},
+    "policy_id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "policy_version": {"type": "integer", "minimum": 1},
+    "allowed_dns_names": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 253}
+    },
+    "allowed_dns_suffixes": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 253}
+    }
+  },
+  "anyOf": [
+    {"properties": {"allowed_dns_names": {"minItems": 1}}},
+    {"properties": {"allowed_dns_suffixes": {"minItems": 1}}}
+  ]
+}

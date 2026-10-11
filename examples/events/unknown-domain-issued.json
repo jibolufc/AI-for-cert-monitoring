@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "event_id": "66f7bde4-3e68-4e88-80a0-303508cb3cc3",
   "event_type": "certificate.issued",
   "observed_at": "2026-10-11T09:00:00Z",
@@ -18,5 +18,13 @@
     "observed_by": "fixture-generator",
     "collected_at": "2026-10-11T09:00:01Z",
     "uri": "https://example.invalid/evidence/66f7bde4"
+  },
+  "provenance": {
+    "collector_id": "fixture-generator",
+    "collector_version": "0.2.0",
+    "source_record_id": "fixture:unknown-domain-issued",
+    "payload_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "verification_state": "unverified",
+    "cursor": "fixture-1"
   }
 }

@@ -8,6 +8,7 @@ from pathlib import Path
 from .errors import ValidationError
 from .models import MonitoringPolicy
 from .pipeline import CertificateMonitoringPipeline
+from .schema_validation import SchemaRegistry
 from .sinks import JsonlAlertSink
 
 
@@ -27,8 +28,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        policy = MonitoringPolicy.from_dict(load_json(args.policy))
-        alert = CertificateMonitoringPipeline(policy).process(load_json(args.event))
+        schemas = SchemaRegistry()
+        policy_payload = load_json(args.policy)
+        schemas.validate("monitoring-policy", policy_payload)
+        policy = MonitoringPolicy.from_dict(policy_payload)
+        alert = CertificateMonitoringPipeline(policy, schemas).process(load_json(args.event))
         if alert is None:
             print("no alert")
             return 0
