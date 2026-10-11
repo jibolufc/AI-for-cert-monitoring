@@ -98,6 +98,7 @@ covered by the configured organization DNS namespace. Use
 ## Repository map
 
 - `docs/architecture/`: Council reviews and architecture decision records
+- `docs/project/`: PRD, HLD, LLD, traceability, assurance, roadmap, and evidence pack
 - `docs/threat-model/`: security boundaries, threats, and mitigations
 - `schemas/`: versioned JSON Schema Draft 2020-12 contracts
 - `rules/`: machine-readable detection metadata
