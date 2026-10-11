@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "event_id": "709bf968-60d3-4fee-87a6-b98753833ab0",
+  "event_type": "certificate.issued",
+  "observed_at": "2026-10-11T09:05:00Z",
+  "source": {"type": "fixture", "id": "local-demo"},
+  "certificate": {
+    "fingerprint_sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+    "serial_number": "02BC34DE",
+    "subject": "CN=api.example.com",
+    "issuer": "CN=Example Test Issuer",
+    "san_dns_names": ["api.example.com", "*.service.example.com"],
+    "not_before": "2026-10-11T09:00:00Z",
+    "not_after": "2027-01-09T09:00:00Z"
+  },
+  "context": {"environment": "production"},
+  "evidence": {
+    "observed_by": "fixture-generator",
+    "collected_at": "2026-10-11T09:05:01Z"
+  }
+}

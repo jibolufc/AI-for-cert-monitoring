@@ -1,0 +1,14 @@
+{
+  "id": "CERT-001",
+  "title": "Certificate contains a DNS name outside approved namespaces",
+  "version": 1,
+  "status": "experimental",
+  "event_types": ["certificate.issued", "certificate.observed"],
+  "condition": "one or more normalized SAN DNS names do not match policy.allowed_dns_names or policy.allowed_dns_suffixes at a DNS label boundary",
+  "false_positive_notes": [
+    "stale ownership policy",
+    "approved third-party or acquired domain",
+    "malformed or incorrectly normalized source telemetry"
+  ],
+  "playbook": "docs/soc-playbooks/CERT-001-unknown-domain.md"
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "event_id": "66f7bde4-3e68-4e88-80a0-303508cb3cc3",
+  "event_type": "certificate.issued",
+  "observed_at": "2026-10-11T09:00:00Z",
+  "source": {"type": "fixture", "id": "local-demo"},
+  "certificate": {
+    "fingerprint_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "serial_number": "01AB23CD",
+    "subject": "CN=login.lookalike-example.net",
+    "issuer": "CN=Example Test Issuer",
+    "san_dns_names": ["login.lookalike-example.net"],
+    "not_before": "2026-10-11T08:55:00Z",
+    "not_after": "2027-01-09T08:55:00Z"
+  },
+  "context": {"environment": "production", "account": "demo", "region": "global"},
+  "evidence": {
+    "observed_by": "fixture-generator",
+    "collected_at": "2026-10-11T09:00:01Z",
+    "uri": "https://example.invalid/evidence/66f7bde4"
+  }
+}
