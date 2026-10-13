@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.1",
+  "log_id": "example-ct-log",
+  "page_after_cursor": "1",
+  "next_cursor": "2",
+  "collected_at": "2026-10-11T10:01:01Z",
+  "entries": [
+    {
+      "index": 1,
+      "observed_at": "2026-10-11T10:01:00Z",
+      "source_uri": "https://ct.example.invalid/logs/example/entries/1",
+      "certificate": {
+        "fingerprint_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "serial_number": "1001",
+        "subject": "CN=login.lookalike-example.net",
+        "issuer": "CN=Example CT Test Issuer",
+        "san_dns_names": ["login.lookalike-example.net"],
+        "not_before": "2026-10-11T09:56:00Z",
+        "not_after": "2027-01-09T09:56:00Z"
+      },
+      "cryptography": {
+        "public_key": {"family": "elliptic-curve", "name": "id-ecPublicKey", "oid": "1.2.840.10045.2.1", "curve": "P-256"},
+        "certificate_signature": {"family": "elliptic-curve", "name": "ecdsa-with-SHA256", "oid": "1.2.840.10045.4.3.2", "hash_algorithm": "SHA-256"},
+        "key_usage": ["digital-signature"],
+        "extended_key_usage": ["server-authentication"]
+      }
+    }
+  ]
+}

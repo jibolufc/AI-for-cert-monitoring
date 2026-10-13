@@ -1,5 +1,7 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
+  "policy_id": "example-organization-dns",
+  "policy_version": 1,
   "allowed_dns_names": ["service.partner-example.org"],
   "allowed_dns_suffixes": ["example.com", "example.co.uk"]
 }

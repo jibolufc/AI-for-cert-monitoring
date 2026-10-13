@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/cryptographic-inventory-record.schema.json",
+  "title": "Evidence-backed cryptographic inventory record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "record_id", "observation_id", "observed_at", "asset", "cryptographic_use", "certificate", "transport_observation", "dependencies", "supplier", "evidence_confidence", "evidence_level", "source_evidence", "event_provenance", "coverage"],
+  "properties": {
+    "schema_version": {"const": "1.1"},
+    "record_id": {"type": "string", "format": "uuid"},
+    "observation_id": {"type": "string", "format": "uuid"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "asset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["asset_id", "service_id", "owner", "environment", "business_criticality", "data_classification", "protection_lifetime_months"],
+      "properties": {
+        "asset_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+        "service_id": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+        "owner": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+        "environment": {"enum": ["production", "staging", "development", "unknown"]},
+        "business_criticality": {"type": ["string", "null"], "enum": ["low", "medium", "high", "critical", "unknown", null]},
+        "data_classification": {"type": ["string", "null"], "enum": ["public", "internal", "confidential", "restricted", "unknown", null]},
+        "protection_lifetime_months": {"type": ["integer", "null"], "minimum": 0, "maximum": 1200}
+      }
+    },
+    "cryptographic_use": {
+      "type": "object", "additionalProperties": false, "required": ["function", "protocol", "implementation", "algorithm"],
+      "properties": {
+        "function": {"enum": ["digital-signature", "authentication-and-key-establishment-capable", "unknown"]},
+        "protocol": {"const": "x509"},
+        "implementation": {
+          "type": "object", "additionalProperties": false, "required": ["product", "provider", "version"],
+          "properties": {
+            "product": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+            "provider": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+            "version": {"type": ["string", "null"], "minLength": 1, "maxLength": 128}
+          }
+        },
+        "algorithm": {"$ref": "#/$defs/algorithm"}
+      }
+    },
+    "certificate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fingerprint_sha256", "subject", "issuer", "not_before", "not_after", "key_usage", "extended_key_usage", "signature_algorithm"],
+      "properties": {
+        "fingerprint_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "subject": {"type": "string", "maxLength": 2048},
+        "issuer": {"type": "string", "minLength": 1, "maxLength": 2048},
+        "not_before": {"type": "string", "format": "date-time"},
+        "not_after": {"type": "string", "format": "date-time"},
+        "key_usage": {"type": "array", "items": {"type": "string"}},
+        "extended_key_usage": {"type": "array", "items": {"type": "string"}},
+        "signature_algorithm": {"$ref": "#/$defs/signatureAlgorithm"}
+      }
+    },
+    "transport_observation": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["protocol", "tls_version", "cipher_suite", "peer_host", "peer_port", "peer_verification", "negotiated_key_establishment"],
+          "properties": {
+            "protocol": {"const": "tls"},
+            "tls_version": {"type": "string", "minLength": 1, "maxLength": 64},
+            "cipher_suite": {"type": "string", "minLength": 1, "maxLength": 256},
+            "peer_host": {"type": "string", "minLength": 1, "maxLength": 256},
+            "peer_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "peer_verification": {"enum": ["unverified", "verified"]},
+            "negotiated_key_establishment": {"type": ["string", "null"], "minLength": 1, "maxLength": 256}
+          }
+        }
+      ]
+    },
+    "dependencies": {"type": "array", "maxItems": 10000, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
+    "supplier": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+    "evidence_confidence": {"enum": ["verified", "unverified", "failed"]},
+    "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
+    "source_evidence": {"$ref": "#/$defs/evidence"},
+    "event_provenance": {"$ref": "#/$defs/provenance"},
+    "coverage": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "limitations"],
+      "properties": {
+        "scope": {"const": "certificate-only"},
+        "limitations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "$defs": {
+    "algorithm": {
+      "type": "object", "additionalProperties": false, "required": ["family", "name", "oid"],
+      "properties": {
+        "family": {"enum": ["rsa", "elliptic-curve", "finite-field-dh", "dsa", "ml-kem", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
+        "name": {"type": "string", "minLength": 1, "maxLength": 128},
+        "oid": {"type": "string", "minLength": 1, "maxLength": 128},
+        "key_size_bits": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "curve": {"type": "string", "minLength": 1, "maxLength": 128},
+        "hash_algorithm": {"type": "string", "minLength": 1, "maxLength": 128}
+      }
+    },
+    "signatureAlgorithm": {
+      "type": "object", "additionalProperties": false, "required": ["family", "name", "oid"],
+      "properties": {
+        "family": {"enum": ["rsa", "elliptic-curve", "dsa", "ml-dsa", "slh-dsa", "hybrid", "other", "unknown"]},
+        "name": {"type": "string", "minLength": 1, "maxLength": 128},
+        "oid": {"type": "string", "minLength": 1, "maxLength": 128},
+        "hash_algorithm": {"type": "string", "minLength": 1, "maxLength": 128}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false, "required": ["observed_by", "collected_at"],
+      "properties": {
+        "observed_by": {"type": "string", "minLength": 1, "maxLength": 256},
+        "collected_at": {"type": "string", "format": "date-time"},
+        "uri": {"type": "string", "format": "uri", "maxLength": 2048}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["collector_id", "collector_version", "source_record_id", "payload_sha256", "verification_state", "evidence_level", "cursor"],
+      "properties": {
+        "collector_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "collector_version": {"type": "string", "minLength": 1, "maxLength": 32},
+        "source_record_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "payload_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "verification_state": {"enum": ["verified", "unverified", "failed"]},
+        "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
+        "cursor": {"type": "string", "minLength": 1, "maxLength": 256}
+      }
+    }
+  }
+}

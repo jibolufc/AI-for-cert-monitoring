@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/offline-evidence-bundle.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "manifest", "artifacts", "signature", "public_key"],
+  "properties": {
+    "schema_version": {"const": "1.0"}, "artifacts": {"type": "object", "minProperties": 1},
+    "signature": {"type": "string", "minLength": 1}, "public_key": {"type": "string", "minLength": 1},
+    "manifest": {"type": "object", "additionalProperties": false,
+      "required": ["schema_version", "bundle_id", "created_at", "sanitised", "entries", "evidence_claim", "signer_trust"],
+      "properties": {
+        "schema_version": {"const": "1.0"}, "bundle_id": {"type": "string", "format": "uuid"}, "created_at": {"type": "string", "format": "date-time"},
+        "sanitised": {"type": "boolean"}, "evidence_claim": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture"]}, "signer_trust": {"const": "self-signed-local-integrity-only"},
+        "entries": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["name", "sha256", "size_bytes"], "properties": {"name": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "size_bytes": {"type": "integer", "minimum": 1}}}}
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/pqc-assessment.schema.json",
+  "title": "Deterministic PQC exposure assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "assessment_id", "record_id", "assessed_at", "method_version", "evidence_level", "exposure_status", "migration_priority", "findings", "missing_context", "limitations", "decision_authority"],
+  "properties": {
+    "schema_version": {"const": "1.1"},
+    "assessment_id": {"type": "string", "format": "uuid"},
+    "record_id": {"type": "string", "format": "uuid"},
+    "assessed_at": {"type": "string", "format": "date-time"},
+    "method_version": {"const": "pqc-exposure-v1"},
+    "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
+    "exposure_status": {"enum": ["quantum-vulnerable", "candidate-quantum-resistant", "hybrid-unverified", "unknown"]},
+    "migration_priority": {"enum": ["high", "medium", "needs-context", "needs-evidence", "verify"]},
+    "findings": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["rule_id", "status", "title", "rationale", "evidence_fields"],
+        "properties": {
+          "rule_id": {"type": "string", "pattern": "^PQC-[0-9]{3}$"},
+          "status": {"enum": ["action-required", "evidence-required", "context-required", "verification-required"]},
+          "title": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1},
+          "evidence_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "missing_context": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "limitations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "decision_authority": {"const": "deterministic-advisory"}
+  }
+}
