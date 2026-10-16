@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/crypto-control-plane/kex-probe-observation.schema.json",
+  "title": "Loopback TLS key-exchange probe observation",
+  "description": "Output envelope of the Rust kex-probe lab collector. The transport object is the certificate-event transport contract; key_establishment adds the IANA group and its quantum-exposure family.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "collector_id", "collector_version", "transport", "key_establishment", "peer_certificate_der_base64"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "collector_id": {"const": "kex-probe"},
+    "collector_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "tls_version", "cipher_suite", "peer_host", "peer_port", "peer_verification", "negotiated_key_establishment"],
+      "properties": {
+        "protocol": {"const": "tls"},
+        "tls_version": {"enum": ["TLSv1.2", "TLSv1.3"]},
+        "cipher_suite": {"type": "string", "pattern": "^TLS_[A-Z0-9_]+$", "maxLength": 256},
+        "peer_host": {"type": "string", "minLength": 1, "maxLength": 64},
+        "peer_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "peer_verification": {"const": "unverified"},
+        "negotiated_key_establishment": {"enum": ["X25519MLKEM768", "x25519", "x448", "secp256r1", "secp384r1", "secp521r1", "ffdhe", "unknown"]}
+      }
+    },
+    "key_establishment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group", "group_id", "family", "offered_groups"],
+      "properties": {
+        "group": {"enum": ["X25519MLKEM768", "x25519", "x448", "secp256r1", "secp384r1", "secp521r1", "ffdhe", "unknown"]},
+        "group_id": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "family": {"enum": ["hybrid", "elliptic-curve", "finite-field-dh", "unknown"]},
+        "offered_groups": {
+          "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true,
+          "items": {"enum": ["X25519MLKEM768", "x25519", "secp256r1", "secp384r1"]}
+        }
+      }
+    },
+    "peer_certificate_der_base64": {"type": "string", "minLength": 4, "maxLength": 1400000, "pattern": "^[A-Za-z0-9+/]+={0,2}$"}
+  }
+}

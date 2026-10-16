@@ -9,3 +9,6 @@ dist/
 *.sqlite
 *.sqlite-journal
 *.jsonl
+
+# Rust build output
+kex-probe/target/
