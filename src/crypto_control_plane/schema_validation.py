@@ -25,6 +25,8 @@ SCHEMA_FILES = {
     "reconciled-evidence": "reconciled-evidence.schema.json",
     "offline-evidence-bundle": "offline-evidence-bundle.schema.json",
     "pilot-authorisation": "pilot-authorisation.schema.json",
+    "g3-readiness-plan": "g3-readiness-plan.schema.json",
+    "g3-readiness-report": "g3-readiness-report.schema.json",
     "integration-proposal": "integration-proposal.schema.json",
     "kex-probe-observation": "kex-probe-observation.schema.json",
 }

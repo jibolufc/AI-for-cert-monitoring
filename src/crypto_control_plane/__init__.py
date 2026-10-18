@@ -5,6 +5,7 @@ from .discovery_lab import LoopbackTlsProbe, SyntheticCertificateFactory, X509Ce
 from .inventory import PqcInventoryService
 from .migration import MigrationPlanner, MigrationWorkflow
 from .roadmap import EvidenceReconciler, OfflineEvidenceBundle, PilotGate
+from .g3_readiness import G3ReadinessGate
 from .schema_validation import SchemaRegistry
 
 __all__ = [

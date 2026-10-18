@@ -45,6 +45,7 @@ Every material claim should use one of these states:
 | [Verification and Validation Plan](05-verification-and-validation-plan.md) | How will correctness, security properties, and fitness for use be demonstrated? |
 | [Security, Risk and Assurance Plan](06-security-risk-and-assurance-plan.md) | What can go wrong, which controls exist, and which assurance claims are forbidden? |
 | [Delivery Roadmap and Governance](07-delivery-roadmap-and-governance.md) | How does the reference implementation become a governed migration platform? |
+| [Gate G3 Pilot Readiness Plan](10-g3-pilot-readiness-plan.md) | What must exist before any bounded real-data pilot can be considered? |
 | [Project Evidence and Demonstration Guide](08-project-evidence-and-demo-guide.md) | How can a reviewer independently reproduce the current claims? |
 
 Related engineering records:

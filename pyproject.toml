@@ -19,6 +19,7 @@ crypto-control-plane-inventory = "crypto_control_plane.inventory_cli:main"
 crypto-control-plane-x509-lab = "crypto_control_plane.discovery_lab_cli:main"
 crypto-control-plane-migration-plan = "crypto_control_plane.migration_cli:main"
 crypto-control-plane-reference-release = "crypto_control_plane.roadmap_cli:main"
+crypto-control-plane-g3-readiness = "crypto_control_plane.g3_readiness_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

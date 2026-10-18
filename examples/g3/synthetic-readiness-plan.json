@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "d39fc1b6-7fc9-5bab-8e66-bfc463a76433",
+  "environment": "synthetic-staging",
+  "requested_by": "g3-readiness-owner",
+  "approved_by": "reference-security-reviewer",
+  "source_id": "fictional-g3-vpc-fixtures",
+  "collection_mode": "read-only",
+  "asset_ids": ["synthetic-web-edge", "synthetic-pki-service"],
+  "valid_from": "2026-10-01T00:00:00Z",
+  "expires_at": "2026-12-31T23:59:59Z",
+  "authenticated_source": false,
+  "evidence_level": "simulated",
+  "data_classification": "synthetic",
+  "retention_days": 30,
+  "privacy_review": "not-required-synthetic",
+  "security_review": "approved",
+  "real_data_enabled": false,
+  "authorisation_reference": null,
+  "stop_conditions": [
+    {
+      "trigger": "Any non-synthetic record, credential, hostname, or address is observed.",
+      "action": "Stop intake, isolate the artifact, and notify the security reviewer.",
+      "owner": "g3-readiness-owner"
+    },
+    {
+      "trigger": "Any attempted mutation or outbound connection outside the synthetic environment occurs.",
+      "action": "Terminate the run and preserve logs for review.",
+      "owner": "reference-security-reviewer"
+    }
+  ],
+  "prohibited_operations": ["issue", "revoke", "rotate", "delete", "deploy", "change-trust", "execute"],
+  "controls": {
+    "workload_identity": {"status": "planned", "evidence_refs": []},
+    "least_privilege_rbac": {"status": "planned", "evidence_refs": []},
+    "private_networking": {"status": "planned", "evidence_refs": []},
+    "encryption": {"status": "planned", "evidence_refs": []},
+    "secret_management": {"status": "planned", "evidence_refs": []},
+    "central_logging": {"status": "planned", "evidence_refs": []},
+    "deployment_controls": {"status": "planned", "evidence_refs": []},
+    "backup_restore": {"status": "planned", "evidence_refs": []}
+  }
+}

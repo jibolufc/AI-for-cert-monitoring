@@ -155,6 +155,9 @@ audit record.
 | Self-approval or unauthorised role | Role gate plus requester/approver separation |
 | Proposal mistaken for execution authority | Schema fixes status to approval-required and execution authority to none |
 | Direct PKI/KMS/HSM mutation | Reject issue, revoke, rotate, delete, deploy, trust-change, and generic execute operations |
+| Synthetic readiness mistaken for real-pilot permission | Report `g3_gate_passed: false` and `collection_execution_authority: none` for every automated assessment |
+| Checklist-only control claims | Require evidence references for every demonstrated staging control and retain independent artifact verification as an external gate |
+| Real-data enablement without complete governance | Block missing authorisation reference, source authentication, classification, privacy/security approval, validity, or independent approval |
 
 ### Residual risk
 
@@ -162,6 +165,15 @@ The reference controls do not establish production identity assurance, database
 row-level security, high availability, disaster recovery, secure key custody,
 privacy compliance, connector credential safety, or external penetration-test
 assurance. Those remain Gate G3-G5 evidence requirements.
+
+## G3 readiness threat-model delta
+
+The readiness plan adds data classification, retention, review status, owned
+stop actions, prohibited operations, and synthetic infrastructure controls as
+protected governance state. The main invariant is that assessment cannot grant
+authority: complete real-pilot declarations result only in
+`g3-decision-required`, and the repository has no collector capable of using
+production credentials or reaching a production source.
 
 ## Out of scope
 
