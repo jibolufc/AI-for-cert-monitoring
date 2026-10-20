@@ -26,6 +26,7 @@ SCHEMA_FILES = {
     "offline-evidence-bundle": "offline-evidence-bundle.schema.json",
     "pilot-authorisation": "pilot-authorisation.schema.json",
     "integration-proposal": "integration-proposal.schema.json",
+    "kex-probe-observation": "kex-probe-observation.schema.json",
 }
 
 
