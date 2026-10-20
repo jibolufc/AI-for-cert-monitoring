@@ -164,7 +164,7 @@ class MigrationPlanningTests(unittest.TestCase):
             "deterministic-advisory-independent-verification-required",
         )
 
-    def test_different_pqc_target_still_requires_migration_approval(self):
+    def test_different_pqc_target_requires_approval_at_low_priority(self):
         catalog = catalog_payload()
         identity = next(
             item for item in catalog["services"] if item["service_id"] == "svc-identity"
@@ -181,9 +181,44 @@ class MigrationPlanningTests(unittest.TestCase):
             item for item in self.plan(catalog).work_items
             if item["service_id"] == "svc-identity"
         )
-        self.assertEqual(work["priority"], "urgent")
-        self.assertEqual(work["wave"], "wave-1")
+        self.assertEqual(work["priority"], "low")
+        self.assertEqual(work["wave"], "wave-3")
         self.assertEqual(work["status"], "approval-required")
+
+    def test_hybrid_use_with_pure_pqc_target_is_not_urgent(self):
+        # svc-identity is critical, confidential, 60 months: urgent if vulnerable.
+        catalog = catalog_payload()
+        identity = next(
+            item for item in catalog["services"] if item["service_id"] == "svc-identity"
+        )
+        use = identity["cryptographic_uses"][0]
+        use["current_algorithm_family"] = "hybrid"
+        use["exposure_status"] = "hybrid-unverified"
+        work = next(
+            item for item in self.plan(catalog).work_items
+            if item["service_id"] == "svc-identity"
+        )
+        self.assertEqual(work["priority"], "low")
+        self.assertEqual(work["wave"], "wave-3")
+        self.assertEqual(work["status"], "approval-required")
+        vulnerable = self.item("svc-identity")
+        self.assertEqual(vulnerable["priority"], "urgent")
+        self.assertEqual(vulnerable["wave"], "wave-1")
+
+    def test_exposure_that_contradicts_algorithm_family_fails_closed(self):
+        cases = [
+            ("ml-dsa", "quantum-vulnerable"),
+            ("rsa", "candidate-quantum-resistant"),
+            ("ml-dsa", "hybrid-unverified"),
+        ]
+        for family, exposure in cases:
+            catalog = catalog_payload()
+            use = catalog["services"][0]["cryptographic_uses"][0]
+            use["current_algorithm_family"] = family
+            use["exposure_status"] = exposure
+            with self.subTest(family=family, exposure=exposure):
+                with self.assertRaisesRegex(ValidationError, "contradicts"):
+                    self.plan(catalog)
 
     def test_stale_decision_and_self_approval_are_rejected(self):
         work = self.item("svc-identity")
@@ -203,8 +238,8 @@ class MigrationPlanningTests(unittest.TestCase):
             "work_item_id": work["work_item_id"],
             "work_item_version": work["object_version"],
             "status": "active",
-            "risk_owner_id": "risk-owner-1",
-            "approved_by": "risk-owner-1",
+            "risk_owner_id": "owner-risk",
+            "approved_by": "owner-risk",
             "approved_at": "2026-09-01T09:00:00Z",
             "expires_at": "2026-10-01T09:00:00Z",
             "rationale": "Temporary supplier-readiness exception.",
@@ -222,8 +257,8 @@ class MigrationPlanningTests(unittest.TestCase):
             "work_item_id": work["work_item_id"],
             "work_item_version": work["object_version"],
             "status": "active",
-            "risk_owner_id": "risk-owner-1",
-            "approved_by": "risk-owner-1",
+            "risk_owner_id": "owner-risk",
+            "approved_by": "owner-risk",
             "approved_at": "2026-10-11T09:00:00Z",
             "expires_at": "2026-11-11T09:00:00Z",
             "rationale": "Supplier target is planned but not yet available.",
@@ -244,7 +279,7 @@ class MigrationPlanningTests(unittest.TestCase):
             "work_item_id": work["work_item_id"],
             "work_item_version": work["object_version"],
             "status": "active",
-            "risk_owner_id": "risk-owner-1",
+            "risk_owner_id": "owner-risk",
             "approved_by": "risk-approver-1",
             "approved_at": "2026-10-11T09:00:00Z",
             "expires_at": "2026-11-11T09:00:00Z",
@@ -256,6 +291,62 @@ class MigrationPlanningTests(unittest.TestCase):
             self.workflow.apply_exception(
                 work, exception, as_of="2026-10-11T12:00:00Z"
             )
+
+    def exception_for(self, work: dict, *, risk_owner: str, approved_by: str) -> dict:
+        return {
+            "schema_version": "1.0",
+            "exception_id": "7d0b3c64-9a47-4f43-9c1e-1b9f6f7d2a10",
+            "work_item_id": work["work_item_id"],
+            "work_item_version": work["object_version"],
+            "status": "active",
+            "risk_owner_id": risk_owner,
+            "approved_by": approved_by,
+            "approved_at": "2026-10-11T09:00:00Z",
+            "expires_at": "2026-11-11T09:00:00Z",
+            "rationale": "Supplier target is planned but not yet available.",
+            "compensating_controls": ["Restrict exposure and review every seven days."],
+            "review_cadence_days": 7,
+        }
+
+    def test_work_item_carries_catalogue_risk_owner(self):
+        self.assertEqual(self.item("svc-payments")["risk_owner_id"], "owner-risk")
+
+    def test_exception_cannot_self_nominate_a_risk_owner(self):
+        work = self.item("svc-payments")
+        exception = self.exception_for(work, risk_owner="anyone", approved_by="anyone")
+        with self.assertRaisesRegex(ValidationError, "other than the catalogue risk owner"):
+            self.workflow.apply_exception(work, exception, as_of="2026-10-11T12:00:00Z")
+
+    def test_exception_rejected_when_catalogue_names_no_risk_owner(self):
+        catalog = catalog_payload()
+        payments = next(
+            item for item in catalog["services"] if item["service_id"] == "svc-payments"
+        )
+        payments["risk_owner_id"] = None
+        work = next(
+            item for item in self.plan(catalog).work_items
+            if item["service_id"] == "svc-payments"
+        )
+        exception = self.exception_for(work, risk_owner="owner-risk", approved_by="owner-risk")
+        with self.assertRaisesRegex(ValidationError, "names no risk owner"):
+            self.workflow.apply_exception(work, exception, as_of="2026-10-11T12:00:00Z")
+
+    def test_catalogue_risk_owner_must_be_a_distinct_risk_owner_role(self):
+        cases = [
+            ("owner-unknown", "unknown risk owner"),
+            ("owner-digital", "must have role"),
+        ]
+        for risk_owner, message in cases:
+            catalog = catalog_payload()
+            catalog["services"][0]["risk_owner_id"] = risk_owner
+            with self.subTest(risk_owner=risk_owner):
+                with self.assertRaisesRegex(ValidationError, message):
+                    self.plan(catalog)
+        catalog = catalog_payload()
+        service = catalog["services"][0]
+        service["requested_by"] = "owner-risk"
+        with self.assertRaisesRegex(ValidationError, "requester cannot be its risk owner"):
+            self.plan(catalog)
 
     def test_verified_state_requires_independent_complete_post_change_evidence(self):
         work = self.item("svc-identity")
