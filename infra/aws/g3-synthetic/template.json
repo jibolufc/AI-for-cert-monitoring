@@ -1,0 +1,337 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Synthetic-only G3 readiness foundation for the cryptographic control plane. Creates no public workload, NAT gateway, production collector, or execution authority.",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {"default": "Verified existing network"},
+          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint"]
+        }
+      ],
+      "ParameterLabels": {
+        "ExistingVpcId": {"default": "Existing G3 VPC"},
+        "PrivateSubnetIds": {"default": "Two verified private subnets"},
+        "PrivateRouteTableIds": {"default": "Route tables associated with the private subnets"},
+        "CreateS3GatewayEndpoint": {"default": "Create an S3 gateway endpoint only if one is not already associated"}
+      }
+    }
+  },
+  "Parameters": {
+    "ExistingVpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "Existing synthetic G3 VPC selected from the local deployment evidence record."
+    },
+    "PrivateSubnetIds": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "Exactly two verified private subnets in different Availability Zones. Do not select public subnets."
+    },
+    "PrivateRouteTableIds": {
+      "Type": "CommaDelimitedList",
+      "AllowedPattern": "^rtb-[a-zA-Z0-9]+$",
+      "ConstraintDescription": "Each value must be an AWS route-table ID beginning with rtb-.",
+      "Description": "Route tables associated with the selected private subnets. A route directly to an internet gateway is prohibited."
+    },
+    "CreateS3GatewayEndpoint": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": ["true", "false"],
+      "Description": "Set to true only after confirming the private route tables do not already have an S3 gateway endpoint route."
+    }
+  },
+  "Conditions": {
+    "ShouldCreateS3GatewayEndpoint": {"Fn::Equals": [{"Ref": "CreateS3GatewayEndpoint"}, "true"]}
+  },
+  "Resources": {
+    "SyntheticEvidenceBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {"ServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
+          ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "expire-synthetic-evidence",
+              "Status": "Enabled",
+              "ExpirationInDays": 30,
+              "NoncurrentVersionExpiration": {"NoncurrentDays": 30}
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [{"ObjectOwnership": "BucketOwnerEnforced"}]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {"Status": "Enabled"},
+        "Tags": [
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Environment", "Value": "g3-synthetic"},
+          {"Key": "DataClassification", "Value": "synthetic"},
+          {"Key": "RealDataEnabled", "Value": "false"}
+        ]
+      }
+    },
+    "SyntheticEvidenceBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {"Ref": "SyntheticEvidenceBucket"},
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyInsecureTransport",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {"Fn::GetAtt": ["SyntheticEvidenceBucket", "Arn"]},
+                {"Fn::Sub": "${SyntheticEvidenceBucket.Arn}/*"}
+              ],
+              "Condition": {"Bool": {"aws:SecureTransport": "false"}}
+            }
+          ]
+        }
+      }
+    },
+    "SyntheticLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {"Fn::Sub": "/aws/lambda/ccp-g3-${AWS::StackName}"},
+        "RetentionInDays": 30,
+        "Tags": [
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Environment", "Value": "g3-synthetic"},
+          {"Key": "DataClassification", "Value": "synthetic"}
+        ]
+      }
+    },
+    "SyntheticWorkloadSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "No-ingress G3 synthetic workload; HTTPS egress is constrained by private routing and the S3 gateway endpoint",
+        "VpcId": {"Ref": "ExistingVpcId"},
+        "SecurityGroupEgress": [
+          {
+            "Description": "HTTPS only; no NAT is created by this stack",
+            "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [
+          {"Key": "Name", "Value": "ccp-g3-synthetic-workload"},
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Environment", "Value": "g3-synthetic"},
+          {"Key": "PublicIngress", "Value": "prohibited"}
+        ]
+      }
+    },
+    "SyntheticWorkloadRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"Service": "lambda.amazonaws.com"},
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Description": "Workload identity for the synthetic-only G3 evidence runner",
+        "Policies": [
+          {
+            "PolicyName": "g3-synthetic-evidence-only",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "WriteAndRestoreSyntheticEvidence",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject"],
+                  "Resource": {"Fn::Sub": "${SyntheticEvidenceBucket.Arn}/runs/*"}
+                },
+                {
+                  "Sid": "ListSyntheticEvidencePrefix",
+                  "Effect": "Allow",
+                  "Action": "s3:ListBucket",
+                  "Resource": {"Fn::GetAtt": ["SyntheticEvidenceBucket", "Arn"]},
+                  "Condition": {"StringLike": {"s3:prefix": ["runs/*"]}}
+                },
+                {
+                  "Sid": "WriteBoundedLogs",
+                  "Effect": "Allow",
+                  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+                  "Resource": {"Fn::GetAtt": ["SyntheticLogGroup", "Arn"]}
+                },
+                {
+                  "Sid": "ManageLambdaNetworkInterfaces",
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DescribeSubnets",
+                    "ec2:DeleteNetworkInterface",
+                    "ec2:AssignPrivateIpAddresses",
+                    "ec2:UnassignPrivateIpAddresses"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Environment", "Value": "g3-synthetic"},
+          {"Key": "ExecutionAuthority", "Value": "synthetic-evidence-only"}
+        ]
+      }
+    },
+    "S3GatewayEndpoint": {
+      "Type": "AWS::EC2::VPCEndpoint",
+      "Condition": "ShouldCreateS3GatewayEndpoint",
+      "Properties": {
+        "VpcEndpointType": "Gateway",
+        "VpcId": {"Ref": "ExistingVpcId"},
+        "ServiceName": {"Fn::Sub": "com.amazonaws.${AWS::Region}.s3"},
+        "RouteTableIds": {"Ref": "PrivateRouteTableIds"},
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": ["s3:GetObject", "s3:PutObject", "s3:ListBucket"],
+              "Resource": [
+                {"Fn::GetAtt": ["SyntheticEvidenceBucket", "Arn"]},
+                {"Fn::Sub": "${SyntheticEvidenceBucket.Arn}/runs/*"}
+              ]
+            }
+          ]
+        },
+        "Tags": [
+          {"Key": "Name", "Value": "ccp-g3-synthetic-s3"},
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Environment", "Value": "g3-synthetic"}
+        ]
+      }
+    },
+    "SyntheticEvidenceFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": ["SyntheticEvidenceBucketPolicy", "SyntheticLogGroup"],
+      "Properties": {
+        "FunctionName": {"Fn::Sub": "ccp-g3-${AWS::StackName}"},
+        "Description": "Writes and restores synthetic-only G3 evidence; rejects real-data flags and all other operations",
+        "Runtime": "python3.13",
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Timeout": 15,
+        "ReservedConcurrentExecutions": 1,
+        "Role": {"Fn::GetAtt": ["SyntheticWorkloadRole", "Arn"]},
+        "VpcConfig": {
+          "SecurityGroupIds": [{"Ref": "SyntheticWorkloadSecurityGroup"}],
+          "SubnetIds": {"Ref": "PrivateSubnetIds"}
+        },
+        "Environment": {
+          "Variables": {
+            "EVIDENCE_BUCKET": {"Ref": "SyntheticEvidenceBucket"},
+            "EVIDENCE_LEVEL": "simulated",
+            "REAL_DATA_ENABLED": "false"
+          }
+        },
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "\n",
+              [
+                "import hashlib",
+                "import json",
+                "import os",
+                "from datetime import datetime, timezone",
+                "import boto3",
+                "",
+                "s3 = boto3.client('s3')",
+                "bucket = os.environ['EVIDENCE_BUCKET']",
+                "",
+                "def handler(event, context):",
+                "    if event.get('data_classification') != 'synthetic':",
+                "        raise ValueError('data_classification must be synthetic')",
+                "    if event.get('real_data_enabled') is not False:",
+                "        raise ValueError('real_data_enabled must be false')",
+                "    action = event.get('action', 'write')",
+                "    if action == 'write':",
+                "        record = {",
+                "            'schema_version': '1.0',",
+                "            'evidence_level': 'simulated',",
+                "            'data_classification': 'synthetic',",
+                "            'observed_at': datetime.now(timezone.utc).isoformat(),",
+                "            'payload': event.get('payload', {'scenario': 'g3-connectivity-test'}),",
+                "        }",
+                "        body = json.dumps(record, sort_keys=True, separators=(',', ':')).encode()",
+                "        key = 'runs/' + context.aws_request_id + '.json'",
+                "        s3.put_object(Bucket=bucket, Key=key, Body=body, ContentType='application/json', ServerSideEncryption='AES256')",
+                "        result = {'status': 'written', 'key': key, 'sha256': hashlib.sha256(body).hexdigest()} ",
+                "        print(json.dumps({'event': 'synthetic_evidence_written', **result}, sort_keys=True))",
+                "        return result",
+                "    if action == 'restore':",
+                "        key = event.get('key', '')",
+                "        if not key.startswith('runs/') or not key.endswith('.json'):",
+                "            raise ValueError('restore key must be a runs/*.json object')",
+                "        body = s3.get_object(Bucket=bucket, Key=key)['Body'].read()",
+                "        record = json.loads(body)",
+                "        if record.get('evidence_level') != 'simulated' or record.get('data_classification') != 'synthetic':",
+                "            raise ValueError('restored object is outside synthetic evidence policy')",
+                "        result = {'status': 'restored', 'key': key, 'sha256': hashlib.sha256(body).hexdigest()} ",
+                "        print(json.dumps({'event': 'synthetic_evidence_restored', **result}, sort_keys=True))",
+                "        return result",
+                "    raise ValueError('only write and restore actions are permitted')"
+              ]
+            ]
+          }
+        },
+        "Tags": [
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Environment", "Value": "g3-synthetic"},
+          {"Key": "DataClassification", "Value": "synthetic"},
+          {"Key": "ExecutionAuthority", "Value": "none"}
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "EvidenceBucketName": {
+      "Description": "Private encrypted and versioned synthetic-evidence bucket",
+      "Value": {"Ref": "SyntheticEvidenceBucket"}
+    },
+    "EvidenceFunctionName": {
+      "Description": "Private-subnet synthetic evidence function",
+      "Value": {"Ref": "SyntheticEvidenceFunction"}
+    },
+    "EvidenceLogGroup": {
+      "Description": "30-day central log group",
+      "Value": {"Ref": "SyntheticLogGroup"}
+    },
+    "S3GatewayEndpointId": {
+      "Condition": "ShouldCreateS3GatewayEndpoint",
+      "Description": "Gateway endpoint used for private S3 access; no NAT or interface endpoint is created",
+      "Value": {"Ref": "S3GatewayEndpoint"}
+    },
+    "CollectionExecutionAuthority": {
+      "Description": "This stack cannot grant real-data or cryptographic execution authority",
+      "Value": "none"
+    }
+  }
+}

@@ -7,6 +7,12 @@ collection remains disabled. No customer, employer, CA, cloud-account, network,
 certificate inventory, credential, or production endpoint is authorised by this
 document or by the example readiness report.
 
+The AWS implementation baseline is defined in
+`infra/aws/g3-synthetic/template.json`. It reuses the existing VPC, requires two
+verified private subnets and their route tables as deployment inputs, creates no
+NAT gateway or public workload, and preserves `collection_execution_authority:
+none`.
+
 ## Required staging evidence
 
 | ID | Control | Minimum evidence |
@@ -69,3 +75,15 @@ may become `synthetic-staging-ready`. Every report must still show
 - the authorised source, asset denominator, and data owner;
 - privacy, security, legal, and operational acceptance as applicable;
 - independent validation and final accountable G3 decision.
+
+## AWS deployment evidence sequence
+
+1. Capture the VPC resource map, NAT count, private subnet IDs, public-IP
+   assignment state, and private route-table destinations.
+2. Create and review a CloudFormation change set from the repository template.
+3. Deploy only after the selected subnet and route-table IDs match step 1.
+4. Run the positive synthetic write, restore, and negative real-data tests.
+5. Export stack events, outputs, Lambda logs, S3 object metadata/version, IAM
+   role policy, security-group rules, and endpoint route evidence.
+6. Hash the evidence manifest and update controls individually; never mark a
+   control demonstrated merely because the stack exists.

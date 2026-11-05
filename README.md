@@ -257,6 +257,12 @@ Written authority and an accountable external decision are required before a
 real source is connected. See
 `docs/project/10-g3-pilot-readiness-plan.md` and ADR-008.
 
+The AWS synthetic-staging baseline is available under
+`infra/aws/g3-synthetic/`. It is parameterised for an existing VPC and verified
+private subnets, creates no NAT gateway or public workload, and includes
+fail-closed synthetic write/restore test paths. Deployment evidence remains
+separate from source-code evidence and does not pass G3.
+
 ## Version 0.9.1: external reassessment remediation
 
 The reproducible D1-D4 findings are remediated: matching current/target PQC
