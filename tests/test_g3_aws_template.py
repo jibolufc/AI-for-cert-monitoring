@@ -67,8 +67,14 @@ class G3AwsTemplateTests(unittest.TestCase):
         self.assertEqual(bucket["LifecycleConfiguration"]["Rules"][0]["ExpirationInDays"], 30)
         policy = self.resources["SyntheticEvidenceBucketPolicy"]["Properties"]["PolicyDocument"]
         self.assertEqual(policy["Statement"][0]["Condition"], {"Bool": {"aws:SecureTransport": "false"}})
+        self.assertEqual(self.resources["SyntheticEvidenceBucketPolicy"]["DeletionPolicy"], "Retain")
+        self.assertEqual(self.resources["SyntheticEvidenceBucketPolicy"]["UpdateReplacePolicy"], "Retain")
 
     def test_workload_identity_is_bounded_and_has_no_lifecycle_authority(self):
+        self.assertEqual(
+            self.resources["SyntheticWorkloadRole"]["Properties"]["PermissionsBoundary"],
+            {"Ref": "WorkloadPermissionsBoundaryArn"},
+        )
         statements = self.resources["SyntheticWorkloadRole"]["Properties"]["Policies"][0]["PolicyDocument"]["Statement"]
         actions = {
             action
@@ -90,7 +96,7 @@ class G3AwsTemplateTests(unittest.TestCase):
         self.assertIn("only write and restore actions are permitted", source)
         self.assertEqual(
             self.resources["SyntheticEvidenceFunction"]["Properties"]["ReservedConcurrentExecutions"],
-            1,
+            0,
         )
 
     def test_every_taggable_resource_is_marked_synthetic(self):

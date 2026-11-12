@@ -1,0 +1,431 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "One-time root bootstrap for the synthetic G3 operator. Gives the named IAM user self-service MFA and MFA-gated CloudFormation access through one dedicated service role; it does not create the G3 workload.",
+  "Parameters": {
+    "OperatorUserName": {
+      "Type": "String",
+      "Default": "Deecoker",
+      "AllowedPattern": "^[A-Za-z0-9+=,.@_-]{1,64}$",
+      "Description": "Existing IAM user that will operate the reviewed synthetic G3 stack."
+    },
+    "ExistingVpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "Verified VPC in which the synthetic workload security group may be created."
+    },
+    "TargetRegion": {
+      "Type": "String",
+      "Default": "us-east-1",
+      "AllowedValues": ["us-east-1"]
+    },
+    "TargetStackName": {
+      "Type": "String",
+      "Default": "ccp-g3-synthetic",
+      "AllowedValues": ["ccp-g3-synthetic"]
+    }
+  },
+  "Resources": {
+    "TemplateStagingBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BucketName": {"Fn::Sub": "ccp-g3-templates-${AWS::AccountId}-${AWS::Region}"},
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {"ServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
+          ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {"Id": "expire-bootstrap-templates", "Status": "Enabled", "ExpirationInDays": 7}
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [{"ObjectOwnership": "BucketOwnerEnforced"}]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "Tags": [
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Purpose", "Value": "g3-reviewed-template-staging"},
+          {"Key": "DataClassification", "Value": "source-code-only"}
+        ]
+      }
+    },
+    "TemplateStagingBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "Bucket": {"Ref": "TemplateStagingBucket"},
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyInsecureTransport",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {"Fn::GetAtt": ["TemplateStagingBucket", "Arn"]},
+                {"Fn::Sub": "${TemplateStagingBucket.Arn}/*"}
+              ],
+              "Condition": {"Bool": {"aws:SecureTransport": "false"}}
+            }
+          ]
+        }
+      }
+    },
+    "WorkloadPermissionsBoundary": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "ccp-g3-workload-boundary",
+        "Description": "Maximum permissions for the synthetic G3 Lambda role; does not grant permissions by itself.",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "SyntheticEvidenceObjectsOnly",
+              "Effect": "Allow",
+              "Action": ["s3:GetObject", "s3:PutObject"],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*/runs/*"}
+            },
+            {
+              "Sid": "ListSyntheticEvidenceOnly",
+              "Effect": "Allow",
+              "Action": "s3:ListBucket",
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*"},
+              "Condition": {"StringLike": {"s3:prefix": ["runs/*"]}}
+            },
+            {
+              "Sid": "WriteOnlyTheSyntheticFunctionLogs",
+              "Effect": "Allow",
+              "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:logs:${TargetRegion}:${AWS::AccountId}:log-group:/aws/lambda/ccp-g3-${TargetStackName}:*"}
+            },
+            {
+              "Sid": "ManageOnlyLambdaNetworkInterfaces",
+              "Effect": "Allow",
+              "Action": [
+                "ec2:CreateNetworkInterface",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSubnets",
+                "ec2:DeleteNetworkInterface",
+                "ec2:AssignPrivateIpAddresses",
+                "ec2:UnassignPrivateIpAddresses"
+              ],
+              "Resource": "*",
+              "Condition": {"StringEquals": {"aws:RequestedRegion": {"Ref": "TargetRegion"}}}
+            }
+          ]
+        }
+      }
+    },
+    "CloudFormationExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "ccp-g3-cloudformation-execution",
+        "Path": "/cfnroles/",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"Service": "cloudformation.amazonaws.com"},
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Description": "Dedicated provisioning identity for the reviewed synthetic G3 stack only.",
+        "Policies": [
+          {
+            "PolicyName": "ccp-g3-reviewed-stack-provisioning",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "ReadReviewedTemplate",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:GetObjectVersion"],
+                  "Resource": {"Fn::Sub": "${TemplateStagingBucket.Arn}/templates/*"}
+                },
+                {
+                  "Sid": "ManageGeneratedEvidenceBucketConfiguration",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:CreateBucket",
+                    "s3:GetBucketLocation",
+                    "s3:GetBucketPolicy",
+                    "s3:GetBucketPublicAccessBlock",
+                    "s3:GetBucketTagging",
+                    "s3:GetBucketVersioning",
+                    "s3:GetEncryptionConfiguration",
+                    "s3:GetLifecycleConfiguration",
+                    "s3:GetBucketOwnershipControls",
+                    "s3:PutEncryptionConfiguration",
+                    "s3:PutBucketPolicy",
+                    "s3:PutBucketPublicAccessBlock",
+                    "s3:PutBucketTagging",
+                    "s3:PutBucketVersioning",
+                    "s3:PutLifecycleConfiguration",
+                    "s3:PutBucketOwnershipControls"
+                  ],
+                  "Resource": {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*"}
+                },
+                {
+                  "Sid": "ManageExactSyntheticFunction",
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:CreateFunction",
+                    "lambda:DeleteFunction",
+                    "lambda:GetFunction",
+                    "lambda:GetFunctionConfiguration",
+                    "lambda:UpdateFunctionCode",
+                    "lambda:UpdateFunctionConfiguration",
+                    "lambda:PutFunctionConcurrency",
+                    "lambda:DeleteFunctionConcurrency",
+                    "lambda:TagResource",
+                    "lambda:UntagResource"
+                  ],
+                  "Resource": {"Fn::Sub": "arn:${AWS::Partition}:lambda:${TargetRegion}:${AWS::AccountId}:function:ccp-g3-${TargetStackName}"}
+                },
+                {
+                  "Sid": "ManageExactSyntheticLogGroup",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:DeleteLogGroup",
+                    "logs:PutRetentionPolicy",
+                    "logs:DeleteRetentionPolicy",
+                    "logs:TagResource",
+                    "logs:UntagResource",
+                    "logs:ListTagsForResource"
+                  ],
+                  "Resource": {"Fn::Sub": "arn:${AWS::Partition}:logs:${TargetRegion}:${AWS::AccountId}:log-group:/aws/lambda/ccp-g3-${TargetStackName}:*"}
+                },
+                {
+                  "Sid": "DescribeLogGroupsForArnResolution",
+                  "Effect": "Allow",
+                  "Action": "logs:DescribeLogGroups",
+                  "Resource": "*"
+                },
+                {
+                  "Sid": "ManageSyntheticSecurityGroupInVerifiedVpc",
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:CreateSecurityGroup",
+                    "ec2:DeleteSecurityGroup",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupEgress",
+                    "ec2:CreateTags",
+                    "ec2:DeleteTags",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeVpcs",
+                    "ec2:DescribeSubnets"
+                  ],
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {"aws:RequestedRegion": {"Ref": "TargetRegion"}},
+                    "ArnEqualsIfExists": {"ec2:Vpc": {"Fn::Sub": "arn:${AWS::Partition}:ec2:${TargetRegion}:${AWS::AccountId}:vpc/${ExistingVpcId}"}}
+                  }
+                },
+                {
+                  "Sid": "CreateBoundedSyntheticWorkloadRole",
+                  "Effect": "Allow",
+                  "Action": "iam:CreateRole",
+                  "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*"},
+                  "Condition": {
+                    "StringEquals": {"iam:PermissionsBoundary": {"Ref": "WorkloadPermissionsBoundary"}}
+                  }
+                },
+                {
+                  "Sid": "ManageOnlySyntheticWorkloadRole",
+                  "Effect": "Allow",
+                  "Action": [
+                    "iam:GetRole",
+                    "iam:DeleteRole",
+                    "iam:TagRole",
+                    "iam:UntagRole",
+                    "iam:PutRolePolicy",
+                    "iam:GetRolePolicy",
+                    "iam:DeleteRolePolicy",
+                    "iam:ListRolePolicies"
+                  ],
+                  "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*"}
+                },
+                {
+                  "Sid": "PassOnlySyntheticWorkloadRoleToLambda",
+                  "Effect": "Allow",
+                  "Action": "iam:PassRole",
+                  "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*"},
+                  "Condition": {"StringEquals": {"iam:PassedToService": "lambda.amazonaws.com"}}
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {"Key": "Project", "Value": "Cryptographic-Control-Plane"},
+          {"Key": "Purpose", "Value": "g3-cloudformation-execution"}
+        ]
+      }
+    },
+    "OperatorSelfMfaPolicy": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "ccp-g3-operator-self-mfa",
+        "Description": "Allows only the named operator to enrol and use their own MFA device; blocks other API use until MFA is present.",
+        "Users": [{"Ref": "OperatorUserName"}],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "ListMfaDevicesForEnrollment",
+              "Effect": "Allow",
+              "Action": ["iam:ListVirtualMFADevices"],
+              "Resource": "*"
+            },
+            {
+              "Sid": "CreateOnlyOwnVirtualMfaDevice",
+              "Effect": "Allow",
+              "Action": "iam:CreateVirtualMFADevice",
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:mfa/${!aws:username}"}
+            },
+            {
+              "Sid": "ManageOnlyOwnMfaDevice",
+              "Effect": "Allow",
+              "Action": ["iam:EnableMFADevice", "iam:GetMFADevice", "iam:ListMFADevices", "iam:ResyncMFADevice", "iam:GetUser"],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:user/${!aws:username}"}
+            },
+            {
+              "Sid": "DeactivateOwnMfaOnlyUsingMfa",
+              "Effect": "Allow",
+              "Action": "iam:DeactivateMFADevice",
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:user/${!aws:username}"},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "DenyAllOtherActionsWithoutMfa",
+              "Effect": "Deny",
+              "NotAction": [
+                "iam:CreateVirtualMFADevice",
+                "iam:EnableMFADevice",
+                "iam:GetMFADevice",
+                "iam:GetUser",
+                "iam:ListMFADevices",
+                "iam:ListVirtualMFADevices",
+                "iam:ResyncMFADevice"
+              ],
+              "Resource": "*",
+              "Condition": {"BoolIfExists": {"aws:MultiFactorAuthPresent": "false"}}
+            }
+          ]
+        }
+      }
+    },
+    "OperatorDeploymentPolicy": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "ccp-g3-operator-deployment",
+        "Description": "MFA-gated change-set operations for only the synthetic G3 stack using its dedicated service role.",
+        "Users": [{"Ref": "OperatorUserName"}],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "ReadCloudFormationForReview",
+              "Effect": "Allow",
+              "Action": ["cloudformation:ListStacks", "cloudformation:ValidateTemplate", "cloudformation:GetTemplateSummary"],
+              "Resource": "*",
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ReadVerifiedNetworkChoicesForCloudFormation",
+              "Effect": "Allow",
+              "Action": ["ec2:DescribeVpcs", "ec2:DescribeSubnets"],
+              "Resource": "*",
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "CreateReviewedChangeSetUsingOnlyApprovedRole",
+              "Effect": "Allow",
+              "Action": "cloudformation:CreateChangeSet",
+              "Resource": [
+                {"Fn::Sub": "arn:${AWS::Partition}:cloudformation:${TargetRegion}:${AWS::AccountId}:stack/${TargetStackName}/*"},
+                {"Fn::Sub": "arn:${AWS::Partition}:cloudformation:${TargetRegion}:${AWS::AccountId}:changeSet/g3-reviewed-*/*"}
+              ],
+              "Condition": {
+                "Bool": {"aws:MultiFactorAuthPresent": "true"},
+                "StringEquals": {"cloudformation:RoleArn": {"Fn::GetAtt": ["CloudFormationExecutionRole", "Arn"]}}
+              }
+            },
+            {
+              "Sid": "ReviewExecuteAndTeardownOnlyApprovedStack",
+              "Effect": "Allow",
+              "Action": [
+                "cloudformation:DescribeChangeSet",
+                "cloudformation:DeleteChangeSet",
+                "cloudformation:ExecuteChangeSet",
+                "cloudformation:DescribeStacks",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:DescribeStackResources",
+                "cloudformation:ListStackResources",
+                "cloudformation:ListChangeSets",
+                "cloudformation:GetTemplate",
+                "cloudformation:DeleteStack"
+              ],
+              "Resource": [
+                {"Fn::Sub": "arn:${AWS::Partition}:cloudformation:${TargetRegion}:${AWS::AccountId}:stack/${TargetStackName}/*"},
+                {"Fn::Sub": "arn:${AWS::Partition}:cloudformation:${TargetRegion}:${AWS::AccountId}:changeSet/g3-reviewed-*/*"}
+              ],
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "PassOnlyApprovedCloudFormationRole",
+              "Effect": "Allow",
+              "Action": "iam:PassRole",
+              "Resource": {"Fn::GetAtt": ["CloudFormationExecutionRole", "Arn"]},
+              "Condition": {
+                "Bool": {"aws:MultiFactorAuthPresent": "true"},
+                "StringEquals": {"iam:PassedToService": "cloudformation.amazonaws.com"}
+              }
+            },
+            {
+              "Sid": "UploadReviewedTemplateOnly",
+              "Effect": "Allow",
+              "Action": ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"],
+              "Resource": {"Fn::Sub": "${TemplateStagingBucket.Arn}/templates/*"},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ViewTemplateStagingBucket",
+              "Effect": "Allow",
+              "Action": ["s3:GetBucketLocation", "s3:ListBucket"],
+              "Resource": {"Fn::GetAtt": ["TemplateStagingBucket", "Arn"]},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "CloudFormationExecutionRoleArn": {
+      "Description": "Pass this exact service role when creating the synthetic G3 change set.",
+      "Value": {"Fn::GetAtt": ["CloudFormationExecutionRole", "Arn"]}
+    },
+    "WorkloadPermissionsBoundaryArn": {
+      "Description": "Pass this ARN to the synthetic G3 template.",
+      "Value": {"Ref": "WorkloadPermissionsBoundary"}
+    },
+    "TemplateStagingBucketName": {
+      "Description": "Upload only reviewed source templates under templates/; objects expire after seven days.",
+      "Value": {"Ref": "TemplateStagingBucket"}
+    },
+    "OperatorUser": {"Value": {"Ref": "OperatorUserName"}}
+  }
+}

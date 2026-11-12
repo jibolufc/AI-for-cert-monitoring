@@ -6,14 +6,15 @@
       "ParameterGroups": [
         {
           "Label": {"default": "Verified existing network"},
-          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint"]
+          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint", "WorkloadPermissionsBoundaryArn"]
         }
       ],
       "ParameterLabels": {
         "ExistingVpcId": {"default": "Existing G3 VPC"},
         "PrivateSubnetIds": {"default": "Two verified private subnets"},
         "PrivateRouteTableIds": {"default": "Route tables associated with the private subnets"},
-        "CreateS3GatewayEndpoint": {"default": "Create an S3 gateway endpoint only if one is not already associated"}
+        "CreateS3GatewayEndpoint": {"default": "Create an S3 gateway endpoint only if one is not already associated"},
+        "WorkloadPermissionsBoundaryArn": {"default": "Approved permissions boundary for the synthetic Lambda role"}
       }
     }
   },
@@ -37,6 +38,12 @@
       "Default": "false",
       "AllowedValues": ["true", "false"],
       "Description": "Set to true only after confirming the private route tables do not already have an S3 gateway endpoint route."
+    },
+    "WorkloadPermissionsBoundaryArn": {
+      "Type": "String",
+      "AllowedPattern": "^arn:(aws|aws-us-gov|aws-cn):iam::[0-9]{12}:policy/ccp-g3-workload-boundary$",
+      "ConstraintDescription": "Use the ccp-g3-workload-boundary policy created by the approved operator bootstrap.",
+      "Description": "Permissions boundary that caps the Lambda workload role even if a future template change attempts to widen its inline policy."
     }
   },
   "Conditions": {
@@ -83,6 +90,8 @@
     },
     "SyntheticEvidenceBucketPolicy": {
       "Type": "AWS::S3::BucketPolicy",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
       "Properties": {
         "Bucket": {"Ref": "SyntheticEvidenceBucket"},
         "PolicyDocument": {
@@ -140,6 +149,7 @@
     "SyntheticWorkloadRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
+        "PermissionsBoundary": {"Ref": "WorkloadPermissionsBoundaryArn"},
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -239,7 +249,7 @@
         "Handler": "index.handler",
         "MemorySize": 128,
         "Timeout": 15,
-        "ReservedConcurrentExecutions": 1,
+        "ReservedConcurrentExecutions": 0,
         "Role": {"Fn::GetAtt": ["SyntheticWorkloadRole", "Arn"]},
         "VpcConfig": {
           "SecurityGroupIds": [{"Ref": "SyntheticWorkloadSecurityGroup"}],

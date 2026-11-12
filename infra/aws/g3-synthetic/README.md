@@ -19,8 +19,14 @@ Before creating the stack, independently verify:
 5. Any NAT gateway and its recurring cost are explicitly accepted; this stack
    neither creates nor requires one.
 6. The account operator uses MFA-backed administrative access, not root access.
+7. A budget owner and teardown owner are named for this temporary environment.
+8. G3-C05 secret-management evidence is planned separately; this stack creates
+   no secret and cannot by itself demonstrate the `secret_management` control.
+9. The dedicated CloudFormation service role and
+   `ccp-g3-workload-boundary` policy were created by the reviewed operator
+   bootstrap; the human operator does not hold direct provisioning permissions.
 
-Do not deploy until all six facts are recorded in the evidence directory.
+Do not deploy until all nine facts are recorded in the evidence directory.
 
 ## Resources
 
@@ -30,11 +36,42 @@ Do not deploy until all six facts are recorded in the evidence directory.
 - no-ingress security group with HTTPS-only egress;
 - dedicated Lambda workload identity with evidence-prefix, logging, and required
   network-interface permissions only;
-- Python 3.13 Lambda in the two private subnets with concurrency capped at one;
+- Python 3.13 Lambda in the two private subnets with reserved concurrency set
+  to zero, keeping invocation disabled until a separately approved update;
 - explicit CloudWatch log group with 30-day retention.
+
+The S3 object and its SHA-256 value are the authoritative durable test evidence.
+CloudWatch logs are supplemental invocation evidence for this standard Lambda
+function; this template does not use Lambda Managed Instances.
 
 The function rejects any event not explicitly marked `synthetic` with
 `real_data_enabled: false`. It supports only `write` and `restore` actions.
+
+## One-time operator bootstrap
+
+Deploy `operator-bootstrap.json` once from the root account only after reviewing
+its change set and acknowledging `CAPABILITY_NAMED_IAM`. It does not create the
+G3 workload. It creates:
+
+- an encrypted, public-blocked template-staging bucket whose objects expire
+  after seven days;
+- AWS-style self-service MFA controls for the named existing IAM user;
+- an MFA-gated operator policy limited to the `ccp-g3-synthetic` stack and
+  change sets named `g3-reviewed-*`;
+- a dedicated CloudFormation service role with template-derived provisioning
+  permissions; and
+- the `ccp-g3-workload-boundary` managed policy required by the Lambda role.
+
+The bootstrap grants no CloudShell access, no administrator policy, no direct
+service-provisioning permissions to the human user, and no normal evidence or
+bucket-deletion authority. After bootstrap creation, sign out of root. The
+operator must enrol MFA, sign out, sign back in with MFA, upload the reviewed
+template only under `templates/`, and use the exact service-role and permissions-
+boundary ARNs returned by the bootstrap outputs.
+
+The bootstrap stack is a security dependency. Do not delete or update it while
+the G3 workload stack exists. Its retained staging bucket and TLS-only policy
+require a separate, approved teardown decision.
 
 ## Console deployment
 
@@ -43,14 +80,16 @@ The function rejects any event not explicitly marked `synthetic` with
 2. Choose **Upload a template file** and select `template.json`.
 3. Use stack name `ccp-g3-synthetic`.
 4. Select the verified VPC, two private subnet IDs, and their route-table IDs.
-5. Leave `CreateS3GatewayEndpoint` as `false` if the route tables already have an
+5. Set `WorkloadPermissionsBoundaryArn` to the output of the approved operator
+   bootstrap and select its dedicated CloudFormation service role.
+6. Leave `CreateS3GatewayEndpoint` as `false` if the route tables already have an
    S3 gateway endpoint. Set it to `true` only when read-only inspection proves
    there is no existing endpoint route.
-6. Keep rollback enabled. Do not enable permissions that CloudFormation does not
+7. Keep rollback enabled. Do not enable permissions that CloudFormation does not
    request.
-7. Acknowledge that the stack creates IAM resources, review the change set,
+8. Acknowledge that the stack creates IAM resources, review the change set,
    and create the stack.
-8. Preserve the stack events, outputs, and resource inventory as deployment
+9. Preserve the stack events, outputs, and resource inventory as deployment
    evidence.
 
 ## Test events
@@ -85,6 +124,9 @@ writing an object.
 A successful stack creation does not pass G3. Only update a readiness control
 from `planned` to `demonstrated` after attaching immutable or hashed evidence of
 the corresponding test. `collection_execution_authority` remains `none`.
+G3-C05 remains `planned` until a separate synthetic-secret lifecycle and access
+test is approved and evidenced; the absence of stored secrets in this stack is
+not evidence that the control has been demonstrated.
 
 ## Cost and teardown
 
@@ -93,6 +135,7 @@ keys, Secrets Manager secrets, and continuously running compute. Normal Lambda,
 S3, and CloudWatch usage charges may still apply.
 
 Before deleting the stack, export the required synthetic evidence. The bucket is
-retained deliberately; empty and delete it separately only after confirming the
-evidence is no longer required. Verify that no stack-created log group, Lambda,
-role, security group, endpoint, or retained bucket remains billable or active.
+retained deliberately together with its TLS-only bucket policy; empty and delete
+them separately only after confirming the evidence is no longer required.
+Verify that no stack-created log group, Lambda, role, security group, endpoint,
+or retained bucket remains billable or active.
