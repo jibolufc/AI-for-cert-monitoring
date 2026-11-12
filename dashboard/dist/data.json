@@ -1,0 +1,102 @@
+{
+  "snapshot": {
+    "displayDate": "12 Nov 2026",
+    "capturedAt": "2026-11-12T20:16:52Z",
+    "kind": "sanitised-static-snapshot"
+  },
+  "deployment": {
+    "stackName": "ccp-g3-synthetic",
+    "stackStatus": "UPDATE_COMPLETE",
+    "region": "us-east-1",
+    "regionLabel": "AWS · N. Virginia",
+    "resourceCount": 6,
+    "privateSubnetCount": 2,
+    "lambdaConcurrency": 0
+  },
+  "boundaries": {
+    "dataClassification": "synthetic",
+    "realDataEnabled": false,
+    "collectionExecutionAuthority": "none",
+    "g3GatePassed": false,
+    "publicWorkload": false,
+    "cryptographicExecution": false
+  },
+  "metrics": [
+    { "label": "Managed resources", "value": "6", "note": "CloudFormation resources", "symbol": "□" },
+    { "label": "Private subnets", "value": "2", "note": "No public workload", "symbol": "⌁" },
+    { "label": "Lambda concurrency", "value": "0", "note": "Invocation disabled", "symbol": "∅" },
+    { "label": "Real sources", "value": "0", "note": "No collection authority", "symbol": "◇" }
+  ],
+  "truths": [
+    { "title": "Infrastructure deployed", "detail": "The bounded AWS foundation exists and is stable.", "state": "confirmed", "tone": "" },
+    { "title": "Synthetic controls demonstrated", "detail": "Individual test evidence has not yet been attached.", "state": "pending", "tone": "pending" },
+    { "title": "Real-data pilot authorised", "detail": "No data owner, source authority, or accountable G3 decision.", "state": "blocked", "tone": "blocked" }
+  ],
+  "activity": [
+    { "title": "AWS stack reached UPDATE_COMPLETE", "time": "12 Nov 2026 · 20:16 UTC", "detail": "Six bounded resources managed" },
+    { "title": "Corrected deployment source committed", "time": "12 Nov 2026", "detail": "Local commit 69da90d" },
+    { "title": "Repository validation passed", "time": "12 Nov 2026", "detail": "105 passed, 1 environment-related skip" }
+  ],
+  "controls": [
+    { "id": "G3-C01", "name": "Workload identity", "status": "planned", "minimumEvidence": "Identity design and no-embedded-credential test", "note": "The Lambda role and permissions boundary are deployed. A test record proving credential behaviour is still required before this control can be marked demonstrated." },
+    { "id": "G3-C02", "name": "Least-privilege RBAC", "status": "planned", "minimumEvidence": "Role matrix plus allowed and denied access tests", "note": "Policy configuration has been observed. Positive and negative access tests, with immutable references, are not yet recorded." },
+    { "id": "G3-C03", "name": "Private networking", "status": "planned", "minimumEvidence": "Network diagram and ingress/egress policy test", "note": "Two private subnets and a no-ingress security group are configured. Route and egress test evidence still needs to be captured." },
+    { "id": "G3-C04", "name": "Encryption", "status": "planned", "minimumEvidence": "Storage and transport configuration evidence", "note": "The evidence bucket configuration includes encryption and TLS-only policy. A complete, hashed configuration record remains outstanding." },
+    { "id": "G3-C05", "name": "Secret management", "status": "planned", "minimumEvidence": "Synthetic-secret lifecycle and access-log evidence", "note": "The baseline intentionally creates no secret. This control requires a separate, approved synthetic-secret test and must not be inferred from the absence of secrets." },
+    { "id": "G3-C06", "name": "Central logging", "status": "planned", "minimumEvidence": "Log destination and correlation test", "note": "A 30-day CloudWatch log group is deployed. Invocation and correlation evidence cannot exist while the function remains disabled." },
+    { "id": "G3-C07", "name": "Deployment controls", "status": "planned", "minimumEvidence": "Reviewed change set, pinned inputs, rollback procedure", "note": "The reviewed change set and successful deployment are known. The complete export and hashed evidence manifest are still being assembled." },
+    { "id": "G3-C08", "name": "Backup and restore", "status": "planned", "minimumEvidence": "Successful synthetic restore and measured recovery time", "note": "No invocation has been authorised. Write, restore, negative real-data rejection, and recovery-time measurement remain outstanding." }
+  ],
+  "pqcPosture": [
+    { "label": "Discovery coverage", "value": "Synthetic", "badge": "Demo", "pillClass": "pill-neutral", "note": "Fictional assets exercise the evidence model without implying production coverage.", "bars": 3 },
+    { "label": "Migration decisions", "value": "Advisory", "badge": "Human gate", "pillClass": "pill-warning", "note": "Deterministic assessments can recommend work; named owners approve decisions.", "bars": 5 },
+    { "label": "Execution authority", "value": "None", "badge": "Fail closed", "pillClass": "pill-success", "note": "Issuance, rotation, revocation, deployment, and trust changes are prohibited.", "bars": 0 }
+  ],
+  "evidence": [
+    {
+      "title": "AWS deployment snapshot",
+      "level": "observed",
+      "pillClass": "pill-success",
+      "fields": [
+        { "label": "Stack", "value": "ccp-g3-synthetic" },
+        { "label": "State", "value": "UPDATE_COMPLETE" },
+        { "label": "Captured", "value": "12 Nov 2026 · 20:16 UTC" },
+        { "label": "Authority", "value": "none" }
+      ]
+    },
+    {
+      "title": "Source validation",
+      "level": "generated",
+      "pillClass": "pill-neutral",
+      "fields": [
+        { "label": "Commit", "value": "69da90d" },
+        { "label": "Tests", "value": "105 passed" },
+        { "label": "Skipped", "value": "1 loopback environment test" },
+        { "label": "Push status", "value": "not pushed" }
+      ]
+    },
+    {
+      "title": "Readiness decision",
+      "level": "simulated",
+      "pillClass": "pill-warning",
+      "fields": [
+        { "label": "Environment", "value": "synthetic-staging" },
+        { "label": "Controls", "value": "0 of 8 demonstrated" },
+        { "label": "G3 passed", "value": "false" },
+        { "label": "Real data", "value": "disabled" }
+      ]
+    },
+    {
+      "title": "Evidence boundary",
+      "level": "policy",
+      "pillClass": "pill-neutral",
+      "fields": [
+        { "label": "Dashboard", "value": "read-only static snapshot" },
+        { "label": "Credentials", "value": "not included" },
+        { "label": "Object contents", "value": "not included" },
+        { "label": "Live AWS access", "value": "not included" }
+      ]
+    }
+  ],
+  "assuranceNote": "This dashboard is a presentation of sanitised project state, not an independent audit, certification, production monitoring service, or authorisation to collect data. The repository contracts and retained evidence remain authoritative."
+}

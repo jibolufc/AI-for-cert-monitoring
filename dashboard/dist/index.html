@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
+    <title>Cryptographic Control Plane</title>
+    <meta name="description" content="Private read-only dashboard for the synthetic G3 cryptographic control plane." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to dashboard</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Dashboard navigation">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <p class="eyebrow">Cryptographic</p>
+            <p class="brand-name">Control Plane</p>
+          </div>
+        </div>
+
+        <nav>
+          <button class="nav-item is-active" type="button" data-section="overview" aria-current="page">
+            <span class="nav-icon">◫</span><span>Overview</span>
+          </button>
+          <button class="nav-item" type="button" data-section="g3-controls">
+            <span class="nav-icon">◇</span><span>G3 controls</span>
+          </button>
+          <button class="nav-item" type="button" data-section="pqc-posture">
+            <span class="nav-icon">⌁</span><span>PQC posture</span>
+          </button>
+          <button class="nav-item" type="button" data-section="evidence">
+            <span class="nav-icon">≡</span><span>Evidence</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="boundary-card">
+            <span class="status-dot"></span>
+            <div>
+              <strong>Safety boundary active</strong>
+              <span>Execution authority: none</span>
+            </div>
+          </div>
+          <p>Private read-only view<br />Synthetic evidence only</p>
+        </div>
+      </aside>
+
+      <main id="main" class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">G3 readiness workspace</p>
+            <h1>Evidence before authority.</h1>
+          </div>
+          <div class="top-actions">
+            <span class="snapshot-badge">Snapshot <span id="snapshot-date">—</span></span>
+            <button id="refresh-view" class="icon-button" type="button" aria-label="Reload dashboard snapshot" title="Reload snapshot">↻</button>
+          </div>
+        </header>
+
+        <div id="load-error" class="load-error" role="alert" hidden>
+          The dashboard snapshot could not be loaded. No AWS action was attempted.
+        </div>
+
+        <section id="overview" class="page-section is-visible" aria-labelledby="overview-title">
+          <div class="hero-grid">
+            <article class="hero-card">
+              <div class="hero-card-top">
+                <span class="pill pill-success">AWS foundation deployed</span>
+                <span class="muted" id="stack-region">—</span>
+              </div>
+              <h2 id="overview-title">Synthetic staging is online.<br /><span>Collection remains off.</span></h2>
+              <p class="hero-copy">The infrastructure exists inside the private VPC, but no real source is connected and no cryptographic change can be executed.</p>
+              <div class="boundary-row">
+                <div><span>Stack</span><strong id="stack-name">—</strong></div>
+                <div><span>State</span><strong id="stack-state">—</strong></div>
+                <div><span>Data</span><strong id="data-mode">—</strong></div>
+              </div>
+            </article>
+
+            <article class="readiness-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Evidence readiness</p>
+                  <h2><span id="controls-demonstrated">0</span><small>/8</small></h2>
+                </div>
+                <div class="ring" id="readiness-ring" aria-label="Zero of eight controls demonstrated"><span id="readiness-percent">0%</span></div>
+              </div>
+              <p>Infrastructure deployment is not G3 approval. Each control needs its own immutable or hashed proof.</p>
+              <div class="progress-track" aria-hidden="true"><span id="readiness-bar"></span></div>
+              <button class="text-button" type="button" data-jump="g3-controls">Review control evidence <span>→</span></button>
+            </article>
+          </div>
+
+          <div class="metric-grid" id="metric-grid" aria-label="Deployment metrics"></div>
+
+          <div class="content-grid">
+            <article class="panel posture-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Decision posture</p><h2>Three truths, kept separate</h2></div>
+              </div>
+              <div class="truth-list" id="truth-list"></div>
+            </article>
+
+            <article class="panel activity-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Recent evidence</p><h2>Audit trail</h2></div>
+                <button class="text-button compact" type="button" data-jump="evidence">View all</button>
+              </div>
+              <ol class="timeline" id="activity-list"></ol>
+            </article>
+          </div>
+        </section>
+
+        <section id="g3-controls" class="page-section" aria-labelledby="controls-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">Gate G3</p><h2 id="controls-title">Control evidence register</h2></div>
+            <span class="pill pill-neutral">Gate passed: false</span>
+          </div>
+          <p class="section-intro">A deployed resource is configuration evidence, not proof that a control works. Controls stay planned until the required test record is attached.</p>
+          <div class="control-list" id="control-list"></div>
+        </section>
+
+        <section id="pqc-posture" class="page-section" aria-labelledby="pqc-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">Migration management</p><h2 id="pqc-title">PQC posture</h2></div>
+            <span class="pill pill-warning">Synthetic catalogue</span>
+          </div>
+          <p class="section-intro">These figures demonstrate the migration workflow using fictional assets. They are not a claim about any production estate.</p>
+          <div class="pqc-grid" id="pqc-grid"></div>
+          <article class="panel decision-panel">
+            <div class="panel-head"><div><p class="eyebrow">Migration path</p><h2>Evidence-led progression</h2></div></div>
+            <div class="flow" aria-label="Discovery to verification workflow">
+              <div><span>01</span><strong>Discover</strong><small>Find cryptographic use</small></div>
+              <i>→</i>
+              <div><span>02</span><strong>Assess</strong><small>Separate fact from unknown</small></div>
+              <i>→</i>
+              <div><span>03</span><strong>Decide</strong><small>Approve target and owner</small></div>
+              <i>→</i>
+              <div><span>04</span><strong>Verify</strong><small>Require pre/post evidence</small></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="evidence" class="page-section" aria-labelledby="evidence-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">Provenance</p><h2 id="evidence-title">Evidence catalogue</h2></div>
+            <span class="pill pill-neutral">Read only</span>
+          </div>
+          <p class="section-intro">This view contains sanitised metadata only. It does not expose credentials, object contents, logs, or live AWS access.</p>
+          <div class="evidence-grid" id="evidence-grid"></div>
+          <article class="assurance-note">
+            <div class="assurance-icon">!</div>
+            <div><strong>Assurance boundary</strong><p id="assurance-note">—</p></div>
+          </article>
+        </section>
+
+        <footer>
+          <span>Cryptographic Control Plane · reference implementation</span>
+          <span>Real-data collection disabled · execution authority none</span>
+        </footer>
+      </main>
+    </div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
