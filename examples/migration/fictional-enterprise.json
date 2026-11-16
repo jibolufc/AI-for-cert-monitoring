@@ -30,7 +30,8 @@
     {"owner_id": "owner-digital", "display_name": "Digital Platform Owner", "role": "service-owner"},
     {"owner_id": "owner-finance", "display_name": "Payments Platform Owner", "role": "service-owner"},
     {"owner_id": "owner-identity", "display_name": "Identity Platform Owner", "role": "service-owner"},
-    {"owner_id": "owner-legacy", "display_name": "Legacy Services Owner", "role": "service-owner"}
+    {"owner_id": "owner-legacy", "display_name": "Legacy Services Owner", "role": "service-owner"},
+    {"owner_id": "owner-risk", "display_name": "Technology Risk Owner", "role": "risk-owner"}
   ],
   "services": [
     {
@@ -39,6 +40,7 @@
       "name": "Workforce identity gateway",
       "owner_id": "owner-identity",
       "requested_by": "owner-identity",
+      "risk_owner_id": "owner-risk",
       "environment": "production",
       "business_criticality": "critical",
       "data_classification": "confidential",
@@ -65,6 +67,7 @@
       "name": "Long-term regulated archive",
       "owner_id": "owner-archive",
       "requested_by": "owner-archive",
+      "risk_owner_id": "owner-risk",
       "environment": "production",
       "business_criticality": "high",
       "data_classification": "restricted",
@@ -91,6 +94,7 @@
       "name": "Customer API gateway",
       "owner_id": "owner-digital",
       "requested_by": "owner-digital",
+      "risk_owner_id": "owner-risk",
       "environment": "production",
       "business_criticality": "high",
       "data_classification": "confidential",
@@ -117,6 +121,7 @@
       "name": "Payment authorisation service",
       "owner_id": "owner-finance",
       "requested_by": "owner-finance",
+      "risk_owner_id": "owner-risk",
       "environment": "production",
       "business_criticality": "critical",
       "data_classification": "restricted",
@@ -143,6 +148,7 @@
       "name": "Legacy document signing service",
       "owner_id": "owner-legacy",
       "requested_by": "owner-legacy",
+      "risk_owner_id": "owner-risk",
       "environment": "production",
       "business_criticality": "medium",
       "data_classification": "internal",
@@ -169,6 +175,7 @@
       "name": "Regulatory reporting portal",
       "owner_id": "owner-finance",
       "requested_by": "owner-finance",
+      "risk_owner_id": "owner-risk",
       "environment": "production",
       "business_criticality": "unknown",
       "data_classification": "confidential",

@@ -12,6 +12,10 @@ from .schema_validation import SchemaRegistry
 
 SIGNATURE_TARGETS = {"ml-dsa", "slh-dsa", "hybrid"}
 KEY_ESTABLISHMENT_TARGETS = {"ml-kem", "hybrid"}
+QUANTUM_VULNERABLE_FAMILIES = {"rsa", "elliptic-curve", "finite-field-dh", "dsa"}
+PQC_FAMILIES = {"ml-kem", "ml-dsa", "slh-dsa"}
+PQC_PROTECTED_EXPOSURE = {"candidate-quantum-resistant", "hybrid-unverified"}
+RISK_OWNER_ROLE = "risk-owner"
 HIGH_ASSURANCE_LEVELS = {"authenticated-production", "independently-verified"}
 EVIDENCE_RANK = {
     "simulated": 0,
@@ -126,6 +130,21 @@ class MigrationPlanner:
                     f"{existing_owner!r} and {service['owner_id']!r}"
                 )
             asset_owners[service["asset_id"]] = service["owner_id"]
+            risk_owner_id = service.get("risk_owner_id")
+            if risk_owner_id is not None:
+                risk_owner = owners.get(risk_owner_id)
+                if risk_owner is None:
+                    raise ValidationError(
+                        f"service {service['service_id']!r} references unknown risk owner {risk_owner_id!r}"
+                    )
+                if risk_owner["role"] != RISK_OWNER_ROLE:
+                    raise ValidationError(
+                        f"risk owner {risk_owner_id!r} must have role {RISK_OWNER_ROLE!r}"
+                    )
+                if risk_owner_id == service["requested_by"]:
+                    raise ValidationError(
+                        f"service {service['service_id']!r} requester cannot be its risk owner"
+                    )
             dependency_ids = [item["service_id"] for item in service["dependencies"]]
             if len(dependency_ids) != len(set(dependency_ids)):
                 raise ValidationError(f"service {service['service_id']!r} repeats a dependency")
@@ -140,6 +159,7 @@ class MigrationPlanner:
                 if use["use_id"] in all_use_ids:
                     raise ValidationError(f"duplicate cryptographic use id: {use['use_id']!r}")
                 all_use_ids.add(use["use_id"])
+                _check_exposure_matches_family(use)
                 if EVIDENCE_RANK[use["evidence_level"]] > EVIDENCE_RANK[catalog["evidence_level"]]:
                     raise ValidationError(
                         f"cryptographic use {use['use_id']!r} claims stronger evidence than its catalogue"
@@ -196,7 +216,7 @@ class MigrationPlanner:
         if use["inventory_record_id"] is not None:
             evidence_refs.append(f"inventory:{use['inventory_record_id']}")
         return {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "work_item_id": work_id,
             "object_version": 1,
             "catalog_id": catalog["catalog_id"],
@@ -206,6 +226,7 @@ class MigrationPlanner:
             "use_id": use["use_id"],
             "owner_id": service["owner_id"],
             "requested_by": service["requested_by"],
+            "risk_owner_id": service.get("risk_owner_id"),
             "environment": service["environment"],
             "current_state": {
                 "function": use["function"],
@@ -353,6 +374,14 @@ class MigrationWorkflow:
         _match_versioned_record(work_item, exception)
         if exception["approved_by"] == work_item["requested_by"]:
             raise ValidationError("requester cannot approve their own exception")
+        if work_item["risk_owner_id"] is None:
+            raise ValidationError(
+                "the catalogue names no risk owner for this service; exceptions cannot be accepted"
+            )
+        if exception["risk_owner_id"] != work_item["risk_owner_id"]:
+            raise ValidationError(
+                "exception names a risk owner other than the catalogue risk owner"
+            )
         if exception["approved_by"] != exception["risk_owner_id"]:
             raise ValidationError("exception must be approved by the named risk owner")
         approved = _timestamp(exception["approved_at"])
@@ -483,6 +512,11 @@ def _priority(service: dict[str, Any], use: dict[str, Any]) -> str:
         return "needs-context"
     if _is_verification_only(use):
         return "verify"
+    if use["exposure_status"] in PQC_PROTECTED_EXPOSURE:
+        # Already protected by a PQC or hybrid mechanism. Moving to a different
+        # target is still change work, but it reduces little quantum risk, so it
+        # must not compete with quantum-vulnerable uses for early waves.
+        return "low"
     lifetime = service["protection_lifetime_months"]
     if service["business_criticality"] == "critical" or (
         service["data_classification"] in {"confidential", "restricted"}
@@ -515,6 +549,21 @@ def _is_verification_only(use: dict[str, Any]) -> bool:
         and use["current_algorithm_family"]
         == use["target_state"]["algorithm_family"]
     )
+
+
+def _check_exposure_matches_family(use: dict[str, Any]) -> None:
+    family = use["current_algorithm_family"]
+    exposure = use["exposure_status"]
+    expected = {
+        "quantum-vulnerable": QUANTUM_VULNERABLE_FAMILIES,
+        "candidate-quantum-resistant": PQC_FAMILIES,
+        "hybrid-unverified": {"hybrid"},
+    }.get(exposure)
+    if expected is not None and family not in expected:
+        raise ValidationError(
+            f"cryptographic use {use['use_id']!r} exposure {exposure!r} contradicts "
+            f"current algorithm family {family!r}"
+        )
 
 
 def _verification_criteria(use: dict[str, Any]) -> list[str]:
