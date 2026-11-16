@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/g3-readiness-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "plan_id", "assessed_at", "status", "g3_gate_passed",
+    "collection_execution_authority", "control_summary", "unmet_requirements",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "plan_id": {"type": "string", "format": "uuid"},
+    "assessed_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["blocked", "synthetic-staging-ready", "g3-decision-required"]},
+    "g3_gate_passed": {"const": false},
+    "collection_execution_authority": {"const": "none"},
+    "control_summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "demonstrated", "remaining"],
+      "properties": {
+        "required": {"type": "integer", "minimum": 0},
+        "demonstrated": {"type": "integer", "minimum": 0},
+        "remaining": {"type": "integer", "minimum": 0}
+      }
+    },
+    "unmet_requirements": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "limitations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

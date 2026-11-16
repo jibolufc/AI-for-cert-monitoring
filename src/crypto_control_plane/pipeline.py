@@ -90,6 +90,11 @@ class CertificateMonitoringPipeline:
 
     def _enrich(self, event: CertificateEvent) -> Enrichment:
         normalized = tuple(normalize_dns_name(name) for name in event.san_dns_names)
+        if not normalized:
+            return Enrichment(
+                all_dns_names=("<no-dns-san>",),
+                unmatched_dns_names=("<no-dns-san>",),
+            )
         unmatched = tuple(
             name
             for name in normalized

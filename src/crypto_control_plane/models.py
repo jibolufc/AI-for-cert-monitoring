@@ -258,11 +258,12 @@ def _validate_evidence_claim(
         "ct-decoded-fixture": {"simulated"},
         "x509-file-parser": {"generated", "sanitised-capture"},
         "tls-loopback-lab": {"generated"},
+        "kex-probe-rust": {"generated"},
     }
     if source_type == "fixture" and evidence_level != "simulated":
         raise ValidationError("fixture sources may only claim simulated evidence")
-    allowed = collector_levels.get(collector_id)
-    if allowed is not None and evidence_level not in allowed:
+    allowed = collector_levels.get(collector_id, {"simulated"})
+    if evidence_level not in allowed:
         raise ValidationError(
             f"collector {collector_id!r} may not claim {evidence_level!r} evidence"
         )

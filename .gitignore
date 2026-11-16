@@ -4,6 +4,9 @@ __pycache__/
 .coverage
 build/
 dist/
+!dashboard/dist/
+!dashboard/dist/**
+dashboard/.sites-checkout/
 *.egg-info/
 .venv/
 *.sqlite

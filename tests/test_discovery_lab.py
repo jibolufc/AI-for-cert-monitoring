@@ -248,6 +248,17 @@ class DiscoveryLabTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             CertificateEvent.from_dict(payload)
 
+    def test_unknown_collector_cannot_claim_generated_evidence(self):
+        payload = json.loads(
+            (ROOT / "examples" / "events" / "known-domain-issued.json").read_text()
+        )
+        payload["source"] = {"type": "tls", "id": "unknown-source"}
+        payload["provenance"]["collector_id"] = "unregistered-collector"
+        payload["provenance"]["evidence_level"] = "generated"
+        self.schemas.validate("certificate-event", payload)
+        with self.assertRaises(ValidationError):
+            CertificateEvent.from_dict(payload)
+
     def test_loopback_probe_records_tls_without_inventing_key_establishment(self):
         generated = self.factory.generate(
             scenario="tls", key_family="rsa", dns_names=("localhost",), now=BASIS

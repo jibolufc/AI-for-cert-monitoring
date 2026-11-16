@@ -120,6 +120,12 @@ python3 -m venv .venv
   --event examples/events/known-domain-issued.json \
   --event examples/events/unknown-domain-issued.json \
   --output-dir build/reference-release
+
+# Assess G3 synthetic-staging readiness without granting collection authority.
+.venv/bin/python -m crypto_control_plane.g3_readiness_cli \
+  --plan examples/g3/synthetic-readiness-plan.json \
+  --output build/g3/readiness-report.json \
+  --as-of 2026-10-18T12:00:00Z
 ```
 
 The example produces a `CERT-001` alert because `lookalike-example.net` is not
@@ -236,6 +242,26 @@ Version 0.9 adds executable foundations for the rest of the roadmap:
    generic execution are rejected.
 
 The reference-release summary always reports `production_gates_passed: false`.
+
+## Gate G3 readiness
+
+The G3 readiness contract makes the next boundary executable without connecting
+real data. It checks the declared source scope, validity window, independent
+approval, data handling, stop plan, prohibited mutations, and eight synthetic
+staging controls. A successful synthetic assessment reports
+`synthetic-staging-ready`, while keeping `g3_gate_passed: false` and
+`collection_execution_authority: none`.
+
+Even a fully declared real-pilot plan can only reach `g3-decision-required`.
+Written authority and an accountable external decision are required before a
+real source is connected. See
+`docs/project/10-g3-pilot-readiness-plan.md` and ADR-008.
+
+The AWS synthetic-staging baseline is available under
+`infra/aws/g3-synthetic/`. It is parameterised for an existing VPC and verified
+private subnets, creates no NAT gateway or public workload, and includes
+fail-closed synthetic write/restore test paths. Deployment evidence remains
+separate from source-code evidence and does not pass G3.
 
 ## Version 0.9.1: external reassessment remediation
 

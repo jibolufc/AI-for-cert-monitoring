@@ -13,6 +13,7 @@
 | 7 | Read-only pilot authorisation and measurement reference gate | ADR-006, pilot schema and negative tests |
 | 8 | Tenant-scoped workflow, audit, and outbox reference foundation | ADR-006, SQLite transaction and isolation tests |
 | 9 | Proposal-only integration boundary | ADR-006, proposal schema and mutation rejection tests |
+| G3 readiness | Synthetic-only readiness contract and non-authorising assessor | ADR-008, G3 schemas, runbook, negative tests |
 
 These commits are local project evidence unless and until deliberately pushed
 and reviewed on GitHub.
@@ -157,4 +158,13 @@ The recommended route is two deliberately separate environments:
 A successful VPC deployment is infrastructure evidence. It is not evidence of
 enterprise discovery coverage, data authority, migration completion, or
 production readiness unless the relevant gates are independently satisfied.
+
+## 10. Current G3 readiness position
+
+The machine-checkable G3 readiness assessor is implemented with a fictional
+synthetic plan. It can establish `synthetic-staging-ready` when all eight
+control evidence references are present. It cannot pass G3 or grant collection
+authority. Real G3 remains open pending a named real source, written authority,
+approved privacy/security review, independently validated artifacts, and an
+accountable external decision.
 
