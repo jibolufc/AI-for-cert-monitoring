@@ -3,7 +3,9 @@ from __future__ import annotations
 import base64
 import copy
 import hashlib
+import hmac
 import json
+import secrets
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
@@ -24,6 +26,10 @@ SENSITIVE_KEYS = {
     "asset_id", "service_id", "observed_by", "collector_id",
     "source_record_id", "account", "region", "fingerprint_sha256",
     "payload_sha256",
+    "event_id", "observation_id", "record_id", "reconciliation_id",
+    "canonical_record_id", "observation_record_ids", "record_ids",
+    "identity_key", "nodes", "edges", "from", "to", "dependencies",
+    "san_dns_names",
 }
 HIGH_ASSURANCE = {"authenticated-production", "independently-verified"}
 PROPOSAL_ONLY_ADAPTERS = {"ticketing", "cmdb", "pki", "kms-hsm", "deployment-evidence"}
@@ -67,7 +73,7 @@ class EvidenceReconciler:
         reconciled = []
         conflict_count = 0
         for key in sorted(groups):
-            observations = sorted(groups[key], key=lambda item: (item["observed_at"], item["record_id"]))
+            observations = sorted(groups[key], key=lambda item: (_timestamp(item["observed_at"]), item["record_id"]))
             states: dict[str, list[str]] = {}
             for observation in observations:
                 algorithm = observation["cryptographic_use"]["algorithm"]
@@ -123,12 +129,19 @@ class OfflineEvidenceBundle:
         created_at: str,
         sanitised: bool = True,
         private_key: Ed25519PrivateKey | None = None,
+        redaction_key: bytes | None = None,
     ) -> dict[str, Any]:
         _timestamp(created_at)
         if not artifacts:
             raise ValidationError("offline bundle requires at least one artifact")
+        if redaction_key is not None and len(redaction_key) < 32:
+            raise ValidationError("redaction key must contain at least 32 bytes")
         key = private_key or Ed25519PrivateKey.generate()
-        content = sanitise(artifacts) if sanitised else copy.deepcopy(artifacts)
+        content = (
+            sanitise(artifacts, redaction_key=redaction_key or secrets.token_bytes(32))
+            if sanitised
+            else copy.deepcopy(artifacts)
+        )
         evidence_claim, evidence_levels = _artifact_evidence_level(artifacts)
         if evidence_levels & HIGH_ASSURANCE:
             raise ValidationError("offline builder cannot originate a high-assurance evidence claim")
@@ -188,25 +201,55 @@ class OfflineEvidenceBundle:
             raise ValidationError("bundle signature verification failed") from exc
         trusted = trusted_public_keys is not None and bundle["public_key"] in trusted_public_keys
         return {
-            "integrity_verified": True,
+            "signature_valid": True,
+            "self_consistent": True,
+            "trusted_integrity_verified": trusted,
+            "integrity_verified": trusted,
             "signer_trusted": trusted,
             "evidence_level": manifest["evidence_claim"],
             "warning": None if trusted else "Self-signed bundle proves integrity, not source identity.",
         }
 
 
-def sanitise(value: Any) -> Any:
-    if isinstance(value, dict):
-        result = {}
-        for key, item in value.items():
-            if key in SENSITIVE_KEYS and item is not None:
-                result[key] = f"redacted:{hashlib.sha256(str(item).encode()).hexdigest()[:12]}"
-            else:
-                result[key] = sanitise(item)
-        return result
-    if isinstance(value, list):
-        return [sanitise(item) for item in value]
-    return value
+def sanitise(value: Any, *, redaction_key: bytes | None = None) -> Any:
+    """Pseudonymise identity-bearing values with an exporter-held HMAC key."""
+    key = redaction_key or secrets.token_bytes(32)
+    sensitive: set[str] = set()
+
+    def collect(item: Any, force: bool = False) -> None:
+        if isinstance(item, dict):
+            for field, child in item.items():
+                collect(child, force or field in SENSITIVE_KEYS)
+        elif isinstance(item, list):
+            for child in item:
+                collect(child, force)
+        elif force and isinstance(item, str) and item:
+            sensitive.add(item)
+
+    collect(value)
+
+    def token(raw: str) -> str:
+        digest = hmac.new(key, b"crypto-control-plane-redaction-v1\x00" + raw.encode(), hashlib.sha256)
+        return f"redacted:{digest.hexdigest()}"
+
+    replacements = {raw: token(raw) for raw in sensitive}
+
+    def clean(item: Any, force: bool = False) -> Any:
+        if isinstance(item, dict):
+            return {field: clean(child, force or field in SENSITIVE_KEYS) for field, child in item.items()}
+        if isinstance(item, list):
+            return [clean(child, force) for child in item]
+        if isinstance(item, str):
+            if force or item in replacements:
+                return replacements.get(item, token(item))
+            result = item
+            for raw in sorted(sensitive, key=len, reverse=True):
+                if raw in result:
+                    result = result.replace(raw, replacements[raw])
+            return result
+        return item
+
+    return clean(value)
 
 
 class PilotGate:

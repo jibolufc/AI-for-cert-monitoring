@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .cli import load_json
@@ -37,23 +38,33 @@ def main(argv: list[str] | None = None) -> int:
         schemas.validate("monitoring-policy", policy_payload)
         policy = MonitoringPolicy.from_dict(policy_payload)
         pipeline = CertificateMonitoringPipeline(policy, schemas)
-        source = FixtureCertificateTransparencySource(args.fixture_dir)
         args.state.parent.mkdir(parents=True, exist_ok=True)
-        with CollectorState(args.state) as state:
-            result = CertificateTransparencyCollector(
-                source=source,
-                state=state,
-                pipeline=pipeline,
-                schemas=schemas,
-            ).collect()
         sink = JsonlAlertSink(args.output)
-        for alert in result.alerts:
-            sink.write(alert)
+        with CollectorState(args.state) as state:
+            _drain_alerts(state, sink)
+            try:
+                source = FixtureCertificateTransparencySource(args.fixture_dir)
+                result = CertificateTransparencyCollector(
+                    source=source,
+                    state=state,
+                    pipeline=pipeline,
+                    schemas=schemas,
+                ).collect()
+            finally:
+                _drain_alerts(state, sink)
         print(json.dumps(result.as_dict(), indent=2, sort_keys=True))
         return 0
     except (OSError, json.JSONDecodeError, ValidationError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def _drain_alerts(state: CollectorState, sink: JsonlAlertSink) -> None:
+    for alert in state.pending_alerts():
+        sink.write(alert)
+        state.mark_alert_delivered(
+            alert["alert_id"], datetime.now(timezone.utc).isoformat()
+        )
 
 
 if __name__ == "__main__":

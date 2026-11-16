@@ -49,6 +49,12 @@ class CollectorState:
                 assessment_json TEXT NOT NULL,
                 observed_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS alert_outbox (
+                alert_id TEXT PRIMARY KEY,
+                alert_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                delivered_at TEXT
+            );
             """
         )
 
@@ -167,6 +173,28 @@ class CollectorState:
                         inventory_record["observed_at"],
                     ),
                 )
+            if alert is not None:
+                self.connection.execute(
+                    """
+                    INSERT INTO alert_outbox (alert_id, alert_json, created_at, delivered_at)
+                    VALUES (?, ?, ?, NULL)
+                    ON CONFLICT(alert_id) DO NOTHING
+                    """,
+                    (alert["alert_id"], _canonical_json(alert), processed_at),
+                )
+
+    def pending_alerts(self) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            "SELECT alert_json FROM alert_outbox WHERE delivered_at IS NULL ORDER BY created_at, alert_id"
+        ).fetchall()
+        return [json.loads(row["alert_json"]) for row in rows]
+
+    def mark_alert_delivered(self, alert_id: str, delivered_at: str) -> None:
+        with self.connection:
+            self.connection.execute(
+                "UPDATE alert_outbox SET delivered_at = ? WHERE alert_id = ?",
+                (delivered_at, alert_id),
+            )
 
     def count_observations(self, status: str | None = None) -> int:
         if status is None:

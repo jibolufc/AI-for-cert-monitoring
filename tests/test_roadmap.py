@@ -81,15 +81,29 @@ class RemainingMilestoneTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "duplicate"):
             reconciler.reconcile([self.record, self.record], as_of=NOW)
 
+    def test_reconciliation_orders_timestamp_instants_not_strings(self):
+        earlier = copy.deepcopy(self.record)
+        earlier["record_id"] = str(uuid4())
+        earlier["observation_id"] = str(uuid4())
+        earlier["observed_at"] = "2026-10-11T10:00:00+05:00"
+        result = EvidenceReconciler(self.schemas).reconcile(
+            [self.record, earlier], as_of=NOW
+        )
+        self.assertEqual(result.records[0]["canonical_record_id"], self.record["record_id"])
+
     def test_signed_bundle_round_trip_and_trust_boundary(self):
         service = OfflineEvidenceBundle(self.schemas)
         bundle = service.create({"inventory": [self.record]}, created_at=NOW)
         result = service.verify(bundle)
-        self.assertTrue(result["integrity_verified"])
+        self.assertTrue(result["signature_valid"])
+        self.assertTrue(result["self_consistent"])
+        self.assertFalse(result["trusted_integrity_verified"])
+        self.assertFalse(result["integrity_verified"])
         self.assertFalse(result["signer_trusted"])
         self.assertEqual(result["evidence_level"], "simulated")
         trusted = service.verify(bundle, trusted_public_keys={bundle["public_key"]})
         self.assertTrue(trusted["signer_trusted"])
+        self.assertTrue(trusted["trusted_integrity_verified"])
         self.assertEqual(trusted["evidence_level"], "simulated")
 
     def test_bundle_tampering_fails_closed(self):
@@ -126,6 +140,14 @@ class RemainingMilestoneTests(unittest.TestCase):
             cleaned["cryptographic_use"]["algorithm"],
             self.record["cryptographic_use"]["algorithm"],
         )
+
+    def test_sanitiser_is_keyed_and_deterministic(self):
+        first = sanitise(self.record, redaction_key=b"a" * 32)
+        second = sanitise(self.record, redaction_key=b"a" * 32)
+        different = sanitise(self.record, redaction_key=b"b" * 32)
+        self.assertEqual(first, second)
+        self.assertNotEqual(first["certificate"]["subject"], different["certificate"]["subject"])
+        self.assertNotIn(b"a" * 32, canonical_json(first))
 
     def test_cbom_and_dependency_exports_retain_conflict_status(self):
         reconciled = EvidenceReconciler(self.schemas).reconcile([self.record], as_of=NOW)
@@ -193,7 +215,9 @@ class RemainingMilestoneTests(unittest.TestCase):
                 ])
             self.assertEqual(result, 0)
             summary = json.loads((Path(directory) / "summary.json").read_text())
-            self.assertTrue(summary["bundle_integrity_verified"])
+            self.assertTrue(summary["bundle_self_consistent"])
+            self.assertFalse(summary["bundle_trusted_integrity_verified"])
+            self.assertFalse(summary["bundle_integrity_verified"])
             self.assertFalse(summary["bundle_signer_trusted"])
             self.assertFalse(summary["production_gates_passed"])
             self.assertEqual(summary["integration_execution_authority"], "none")

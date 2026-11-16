@@ -104,6 +104,15 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(len(lines), 1)
             self.assertEqual(json.loads(lines[0])["alert_id"], alert["alert_id"])
 
+    def test_jsonl_sink_rejects_same_id_with_different_payload(self):
+        alert = self.pipeline.process(fixture("unknown-domain-issued.json"))
+        assert alert is not None
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "alerts.jsonl"
+            path.write_text(json.dumps({"alert_id": alert["alert_id"]}) + "\n")
+            with self.assertRaisesRegex(ValidationError, "collision"):
+                JsonlAlertSink(path).write(alert)
+
 
 if __name__ == "__main__":
     unittest.main()

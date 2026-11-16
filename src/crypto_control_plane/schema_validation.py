@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sysconfig
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -41,7 +42,10 @@ class SchemaRegistry:
 
     @staticmethod
     def default_schema_directory() -> Path:
-        return Path(__file__).resolve().parents[2] / "schemas"
+        repository_schemas = Path(__file__).resolve().parents[2] / "schemas"
+        if repository_schemas.is_dir():
+            return repository_schemas
+        return Path(sysconfig.get_path("data")) / "share" / "crypto-control-plane" / "schemas"
 
     def validate(self, contract: str, payload: Any) -> None:
         validator = self._validators.get(contract)

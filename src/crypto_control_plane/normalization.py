@@ -34,7 +34,8 @@ def policy_candidate(name: str) -> str:
 
 
 def matches_policy(name: str, exact_names: tuple[str, ...], suffixes: tuple[str, ...]) -> bool:
+    wildcard = name.startswith("*.")
     candidate = policy_candidate(name)
-    if candidate in exact_names:
+    if not wildcard and candidate in exact_names:
         return True
     return any(candidate == suffix or candidate.endswith(f".{suffix}") for suffix in suffixes)
