@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import json
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -340,6 +344,92 @@ class LoopbackTlsProbe:
             evidence_uri=f"tls://{host}:{port}",
             context=context,
             transport=transport,
+        )
+
+
+class RustKexProbe:
+    """Runs the Rust kex-probe binary against a loopback peer.
+
+    The binary records the negotiated key-exchange group, which Python's ssl
+    module cannot report. This adapter treats the binary as an untrusted
+    collector: it re-checks the target, bounds the output, validates the
+    envelope schema, and requires the reported peer to match the request.
+    """
+
+    collector_id = "kex-probe-rust"
+    max_output_bytes = 2_000_000
+
+    def __init__(self, schemas: SchemaRegistry, binary: Path | str, *, timeout_seconds: float = 5.0):
+        if not 0 < timeout_seconds <= 10:
+            raise ValueError("timeout_seconds must be greater than zero and at most 10")
+        self.schemas = schemas
+        self.binary = Path(binary)
+        self.timeout_seconds = timeout_seconds
+        self.parser = X509CertificateDiscovery(schemas)
+
+    def probe(
+        self,
+        host: str,
+        port: int,
+        *,
+        observed_at: str,
+        server_hostname: str = "localhost",
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError as exc:
+            raise ValidationError("kex probe requires an IP address literal") from exc
+        if not address.is_loopback:
+            raise ValidationError("kex probe refuses non-loopback targets")
+        if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
+            raise ValidationError("TLS port must be an integer from 1 to 65535")
+        if not isinstance(server_hostname, str) or not 1 <= len(server_hostname) <= 253:
+            raise ValidationError("server_hostname must contain 1 to 253 characters")
+
+        command = [
+            str(self.binary), "probe",
+            "--host", host, "--port", str(port),
+            "--server-name", server_hostname,
+            "--timeout-ms", str(int(self.timeout_seconds * 1000)),
+        ]
+        try:
+            completed = subprocess.run(
+                command, capture_output=True, timeout=self.timeout_seconds + 2, check=False
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise ValidationError(f"kex probe could not run: {exc}") from exc
+        if completed.returncode != 0:
+            detail = completed.stderr[:512].decode("utf-8", "replace").strip()
+            raise ValidationError(f"kex probe failed (exit {completed.returncode}): {detail}")
+        if len(completed.stdout) > self.max_output_bytes:
+            raise ValidationError("kex probe output exceeds the size limit")
+        try:
+            envelope = json.loads(completed.stdout)
+        except ValueError as exc:
+            raise ValidationError("kex probe output is not valid JSON") from exc
+        self.schemas.validate("kex-probe-observation", envelope)
+
+        transport = envelope["transport"]
+        if transport["peer_host"] != host or transport["peer_port"] != port:
+            raise ValidationError("kex probe reported a different peer than requested")
+        if transport["negotiated_key_establishment"] != envelope["key_establishment"]["group"]:
+            raise ValidationError("kex probe transport and key-establishment group disagree")
+        try:
+            certificate_der = base64.b64decode(envelope["peer_certificate_der_base64"], validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise ValidationError("kex probe certificate is not valid base64") from exc
+
+        return self.parser._parse(
+            certificate_der,
+            source_type="tls",
+            source_id=f"{host}:{port}",
+            collector_id=self.collector_id,
+            evidence_level="generated",
+            observed_at=observed_at,
+            evidence_uri=f"tls://{host}:{port}",
+            context=context,
+            transport=dict(transport),
         )
 
 

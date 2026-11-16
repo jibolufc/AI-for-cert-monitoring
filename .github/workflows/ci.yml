@@ -42,3 +42,33 @@ jobs:
           python -m crypto_control_plane.inventory_cli \
             --event examples/events/known-domain-issued.json \
             --output "${RUNNER_TEMP}/pqc-inventory-assessment.json"
+
+  kex-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Show Rust toolchain
+        run: rustc --version && cargo --version
+      - name: Lint kex-probe
+        working-directory: kex-probe
+        run: |
+          cargo fmt --check
+          cargo clippy --locked --all-targets -- -D warnings
+      - name: Test kex-probe against its loopback lab server
+        working-directory: kex-probe
+        run: cargo test --locked
+      - name: Build kex-probe
+        working-directory: kex-probe
+        run: cargo build --locked --release
+      - name: Install package
+        run: python -m pip install --disable-pip-version-check -e .
+      - name: End-to-end key-exchange evidence through the Python adapter
+        run: python tools/kex_probe_smoke.py kex-probe/target/release/kex-probe
