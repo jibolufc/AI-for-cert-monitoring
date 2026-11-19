@@ -58,6 +58,9 @@ Related engineering records:
 - `schemas/`: machine-readable interface contracts
 - `tests/`: executable verification evidence
 - `examples/`: simulated and generated scenarios
+- `docs/operations/G4-C01`, `G4-C02`, `G4-C09` and `G4-C10`: prepared G4
+  foundation drafts that remain unevidenced until owners approve and exercises
+  are independently reviewed
 
 ## Evidence hierarchy
 

@@ -22,15 +22,27 @@
     "No accountable external G4 decision has been recorded."
   ],
   "controls": {
-    "service_ownership": {"status": "planned", "evidence_refs": []},
-    "service_level_objectives": {"status": "planned", "evidence_refs": []},
+    "service_ownership": {
+      "status": "planned",
+      "evidence_refs": ["docs/operations/G4-C01-service-ownership.md"]
+    },
+    "service_level_objectives": {
+      "status": "planned",
+      "evidence_refs": ["docs/operations/G4-C02-service-level-objectives.md"]
+    },
     "production_identity_access": {"status": "planned", "evidence_refs": []},
     "monitoring_alerting": {"status": "planned", "evidence_refs": []},
     "incident_response": {"status": "planned", "evidence_refs": []},
     "backup_failover_recovery": {"status": "planned", "evidence_refs": []},
     "secure_delivery_supply_chain": {"status": "planned", "evidence_refs": []},
     "independent_security_testing": {"status": "planned", "evidence_refs": []},
-    "data_protection_retention": {"status": "planned", "evidence_refs": []},
-    "operational_runbooks_support": {"status": "planned", "evidence_refs": []}
+    "data_protection_retention": {
+      "status": "planned",
+      "evidence_refs": ["docs/operations/G4-C09-data-protection-retention.md"]
+    },
+    "operational_runbooks_support": {
+      "status": "planned",
+      "evidence_refs": ["docs/operations/G4-C10-operating-runbooks.md"]
+    }
   }
 }

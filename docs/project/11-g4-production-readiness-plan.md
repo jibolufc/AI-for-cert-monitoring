@@ -15,6 +15,20 @@ The machine-checkable contract fixes all of those authorities to disabled or
 `g4_gate_passed: false`; only an accountable external governance record may
 authorise operation as a production service.
 
+### Foundation tranche: 19 November 2026
+
+The local foundation drafts for G4-C01, G4-C02, G4-C09 and G4-C10 are prepared:
+
+- [`G4-C01 service ownership`](../operations/G4-C01-service-ownership.md)
+- [`G4-C02 candidate service-level objectives`](../operations/G4-C02-service-level-objectives.md)
+- [`G4-C09 data protection and retention`](../operations/G4-C09-data-protection-retention.md)
+- [`G4-C10 operating runbooks`](../operations/G4-C10-operating-runbooks.md)
+
+All four controls remain `planned`. Named owners, approved targets, enforcement
+evidence and exercised runbooks are deliberately unresolved, so document
+existence cannot make the gate pass. The current assessment remains `blocked`
+with zero demonstrated and ten remaining controls.
+
 ## Required preparation evidence
 
 | ID | Control | Minimum evidence |

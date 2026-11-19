@@ -5,11 +5,12 @@
 
 ## Context
 
-The controlled G3 synthetic test demonstrated reviewed deployment-window
-handling and hash-consistent restore, but six G3 controls, a real source,
-written authority, and an external G3 decision remain open. Production planning
-can proceed without weakening those boundaries if preparation evidence is kept
-separate from operating authority.
+The G3 synthetic-staging control set now has seven demonstrated controls and one
+documented not-applicable disposition for the secretless workload. This closes
+the synthetic control set but does not pass G3, authorise a real source or
+replace an external accountable decision. Production planning can proceed
+without weakening those boundaries if preparation evidence is kept separate
+from operating authority.
 
 ## Decision
 
@@ -31,8 +32,8 @@ Every report fixes `g4_gate_passed` to `false`,
 
 ## Consequences
 
-- G4 design, SLO, runbook and assurance preparation can proceed alongside G3
-  closure without connecting real data.
+- G4 design, SLO, runbook and assurance preparation can proceed after synthetic
+  staging readiness without connecting real data.
 - Missing production controls remain machine-visible.
 - A completed preparation checklist cannot silently become production approval.
 - Independent evidence verification and accountable governance remain external.

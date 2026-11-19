@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "record_id": "g4-foundation-preparation-2026-11-19",
+  "recorded_at": "2026-11-19T15:43:30Z",
+  "environment": "production-preparation",
+  "evidence_level": "simulated",
+  "data_classification": "synthetic",
+  "tranche": [
+    "G4-C01",
+    "G4-C02",
+    "G4-C09",
+    "G4-C10"
+  ],
+  "artifact_hashes": [
+    {
+      "path": "docs/operations/G4-C01-service-ownership.md",
+      "sha256": "5277f4d5e973b5197df4db9d184c167664c913d3b2c5ddecdf398f3c5cd87fee"
+    },
+    {
+      "path": "docs/operations/G4-C02-service-level-objectives.md",
+      "sha256": "5146f649742dc3d562f6f8cee4057db2f69fb0939fcafc2b8e3e886f78ddf973"
+    },
+    {
+      "path": "docs/operations/G4-C09-data-protection-retention.md",
+      "sha256": "dea2fadc634ce86751d7752522e6c3a0252a73db3ddb6d9cae0d1737a32eb5a1"
+    },
+    {
+      "path": "docs/operations/G4-C10-operating-runbooks.md",
+      "sha256": "e6b4b2983dbe73f7f47fca446813fa9f088aec49cdf9b8a7cb9c8d9b1e0fc6cc"
+    },
+    {
+      "path": "examples/g4/synthetic-production-preparation-plan.json",
+      "sha256": "f512ba0fb4b32a83bec2c569dbf2213ce37fe67403dd395dc6443d255993f060"
+    },
+    {
+      "path": "tests/test_g4_foundation_artifacts.py",
+      "sha256": "891f0a7b47c4c70dcd53457191a3982a1d16b54345c141443674bc54e5a68cec"
+    }
+  ],
+  "validation": {
+    "targeted_tests": 15,
+    "targeted_result": "passed",
+    "prepared_controls": 4,
+    "demonstrated_controls": 0,
+    "remaining_controls": 10
+  },
+  "unresolved_acceptance_items": [
+    "Service, security, data, operations and change-approval roles are unassigned.",
+    "Candidate SLOs have no owner approval or measurement history.",
+    "The data-protection baseline has not been approved for real data.",
+    "Deployment, rollback, access, recovery and incident runbooks have not been exercised or independently reviewed."
+  ],
+  "authority": {
+    "g4_gate_passed": false,
+    "production_operating_authority": "none",
+    "migration_execution_authority": "none",
+    "real_data_enabled": false,
+    "public_endpoint_enabled": false,
+    "production_traffic_enabled": false
+  },
+  "decision": "Foundation artefacts are prepared and hash-recorded but do not demonstrate any G4 control."
+}
