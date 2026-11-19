@@ -28,6 +28,8 @@ SCHEMA_FILES = {
     "pilot-authorisation": "pilot-authorisation.schema.json",
     "g3-readiness-plan": "g3-readiness-plan.schema.json",
     "g3-readiness-report": "g3-readiness-report.schema.json",
+    "g4-readiness-plan": "g4-readiness-plan.schema.json",
+    "g4-readiness-report": "g4-readiness-report.schema.json",
     "integration-proposal": "integration-proposal.schema.json",
     "kex-probe-observation": "kex-probe-observation.schema.json",
 }

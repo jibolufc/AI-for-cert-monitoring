@@ -6,6 +6,7 @@ from .inventory import PqcInventoryService
 from .migration import MigrationPlanner, MigrationWorkflow
 from .roadmap import EvidenceReconciler, OfflineEvidenceBundle, PilotGate
 from .g3_readiness import G3ReadinessGate
+from .g4_readiness import G4ReadinessGate
 from .schema_validation import SchemaRegistry
 
 __all__ = [
@@ -14,6 +15,8 @@ __all__ = [
     "MigrationPlanner",
     "MigrationWorkflow",
     "EvidenceReconciler",
+    "G3ReadinessGate",
+    "G4ReadinessGate",
     "OfflineEvidenceBundle",
     "PilotGate",
     "PqcInventoryService",

@@ -14,6 +14,7 @@
 | 8 | Tenant-scoped workflow, audit, and outbox reference foundation | ADR-006, SQLite transaction and isolation tests |
 | 9 | Proposal-only integration boundary | ADR-006, proposal schema and mutation rejection tests |
 | G3 readiness | Synthetic-only readiness contract and non-authorising assessor | ADR-008, G3 schemas, runbook, negative tests |
+| G4 preparation | Synthetic-only production-preparation contract and non-authorising assessor | ADR-009, G4 schemas, preparation plan, negative tests |
 
 These commits are local project evidence unless and until deliberately pushed
 and reviewed on GitHub.
@@ -167,4 +168,16 @@ control evidence references are present. It cannot pass G3 or grant collection
 authority. Real G3 remains open pending a named real source, written authority,
 approved privacy/security review, independently validated artifacts, and an
 accountable external decision.
+
+## 11. Current G4 preparation position
+
+G4 preparation is proceeding in parallel with G3 closure without creating a
+production service. The machine-checkable contract tracks ten production
+control areas and can report `g4-preparation-ready` only when each has evidence
+references. It always reports `g4_gate_passed: false`, production operating
+authority `none`, and migration execution authority `none`.
+
+The reference example starts `blocked` with all ten controls planned. No public
+endpoint, production traffic, real data, production identity provider,
+penetration test, operational SLO, or accountable G4 decision is claimed.
 

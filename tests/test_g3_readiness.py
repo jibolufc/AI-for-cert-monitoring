@@ -34,14 +34,75 @@ class G3ReadinessTests(unittest.TestCase):
         self.assertEqual(report["status"], "synthetic-staging-ready")
         self.assertFalse(report["g3_gate_passed"])
         self.assertEqual(report["collection_execution_authority"], "none")
-        self.assertEqual(report["control_summary"], {"required": 8, "demonstrated": 8, "remaining": 0})
+        self.assertEqual(
+            report["control_summary"],
+            {"required": 8, "demonstrated": 8, "not_applicable": 0, "remaining": 0},
+        )
 
     def test_missing_control_evidence_blocks_readiness(self):
         plan = self.demonstrated_plan()
         plan["controls"]["backup_restore"] = {"status": "planned", "evidence_refs": []}
         report = self.gate.assess(plan, as_of=NOW)
         self.assertEqual(report["status"], "blocked")
-        self.assertIn("control is not evidenced as demonstrated: backup_restore", report["unmet_requirements"])
+        self.assertIn(
+            "control is not evidenced as demonstrated or accepted not applicable: backup_restore",
+            report["unmet_requirements"],
+        )
+
+    def test_secret_management_can_be_accepted_not_applicable_for_secretless_synthetic_staging(self):
+        plan = self.demonstrated_plan()
+        plan["controls"]["secret_management"] = {
+            "status": "not-applicable",
+            "evidence_refs": ["decision:g3-c05-secretless-synthetic-scope"],
+        }
+
+        report = self.gate.assess(plan, as_of=NOW)
+
+        self.assertEqual(report["status"], "synthetic-staging-ready")
+        self.assertEqual(
+            report["control_summary"],
+            {"required": 8, "demonstrated": 7, "not_applicable": 1, "remaining": 0},
+        )
+
+    def test_not_applicable_requires_a_decision_reference(self):
+        plan = self.demonstrated_plan()
+        plan["controls"]["secret_management"] = {
+            "status": "not-applicable",
+            "evidence_refs": [],
+        }
+
+        report = self.gate.assess(plan, as_of=NOW)
+
+        self.assertEqual(report["status"], "blocked")
+        self.assertIn(
+            "control is not evidenced as demonstrated or accepted not applicable: secret_management",
+            report["unmet_requirements"],
+        )
+
+    def test_secret_management_not_applicable_is_rejected_for_a_real_pilot(self):
+        plan = self.demonstrated_plan()
+        plan.update({
+            "environment": "authorised-pilot",
+            "real_data_enabled": True,
+            "authenticated_source": True,
+            "evidence_level": "authenticated-production",
+            "data_classification": "confidential",
+            "privacy_review": "approved",
+            "security_review": "approved",
+            "authorisation_reference": "APPROVAL-EXTERNAL-001",
+        })
+        plan["controls"]["secret_management"] = {
+            "status": "not-applicable",
+            "evidence_refs": ["decision:g3-c05-secretless-synthetic-scope"],
+        }
+
+        report = self.gate.assess(plan, as_of=NOW)
+
+        self.assertEqual(report["status"], "blocked")
+        self.assertIn(
+            "control is not evidenced as demonstrated or accepted not applicable: secret_management",
+            report["unmet_requirements"],
+        )
 
     def test_synthetic_plan_rejects_real_data_and_claim_inflation(self):
         plan = self.demonstrated_plan()

@@ -17,10 +17,11 @@
     "collection_execution_authority": {"const": "none"},
     "control_summary": {
       "type": "object", "additionalProperties": false,
-      "required": ["required", "demonstrated", "remaining"],
+      "required": ["required", "demonstrated", "not_applicable", "remaining"],
       "properties": {
         "required": {"type": "integer", "minimum": 0},
         "demonstrated": {"type": "integer", "minimum": 0},
+        "not_applicable": {"type": "integer", "minimum": 0},
         "remaining": {"type": "integer", "minimum": 0}
       }
     },

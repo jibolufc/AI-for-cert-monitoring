@@ -82,11 +82,29 @@ class G3AwsTemplateTests(unittest.TestCase):
             for action in ([statement["Action"]] if isinstance(statement["Action"], str) else statement["Action"])
         }
         self.assertFalse(actions & {"kms:*", "secretsmanager:*", "iam:*", "acm:*", "acm-pca:*"})
+        self.assertFalse(any(action.startswith("secretsmanager:") for action in actions))
         self.assertFalse(actions & {"s3:DeleteObject", "ec2:RunInstances", "lambda:InvokeFunction"})
         self.assertIn("s3:PutObject", actions)
         self.assertIn("s3:GetObject", actions)
         log_statement = next(item for item in statements if item["Sid"] == "WriteBoundedLogs")
         self.assertEqual(log_statement["Resource"], {"Fn::GetAtt": ["SyntheticLogGroup", "Arn"]})
+
+    def test_function_uses_role_credentials_not_embedded_credentials(self):
+        function = self.resources["SyntheticEvidenceFunction"]["Properties"]
+        self.assertEqual(function["Role"], {"Fn::GetAtt": ["SyntheticWorkloadRole", "Arn"]})
+        self.assertEqual(
+            set(function["Environment"]["Variables"]),
+            {"EVIDENCE_BUCKET", "EVIDENCE_LEVEL", "REAL_DATA_ENABLED"},
+        )
+        source = "\n".join(function["Code"]["ZipFile"]["Fn::Join"][1])
+        for forbidden in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "aws_access_key_id", "aws_secret_access_key"):
+            self.assertNotIn(forbidden, source)
+
+    def test_central_log_group_is_explicit_and_retained_for_thirty_days(self):
+        log_group = self.resources["SyntheticLogGroup"]
+        self.assertEqual(log_group["Properties"]["RetentionInDays"], 30)
+        function = self.resources["SyntheticEvidenceFunction"]
+        self.assertIn("SyntheticLogGroup", function["DependsOn"])
 
     def test_function_fails_closed_on_real_data_and_unknown_actions(self):
         code = self.resources["SyntheticEvidenceFunction"]["Properties"]["Code"]["ZipFile"]["Fn::Join"][1]
@@ -96,7 +114,20 @@ class G3AwsTemplateTests(unittest.TestCase):
         self.assertIn("only write and restore actions are permitted", source)
         self.assertEqual(
             self.resources["SyntheticEvidenceFunction"]["Properties"]["ReservedConcurrentExecutions"],
-            0,
+            {"Fn::If": ["ShouldEnableSyntheticInvocation", 1, 0]},
+        )
+
+    def test_synthetic_invocation_is_disabled_by_default_and_time_bounded(self):
+        parameter = self.template["Parameters"]["SyntheticInvocationEnabled"]
+        self.assertEqual(parameter["Default"], "false")
+        self.assertEqual(parameter["AllowedValues"], ["true", "false"])
+        self.assertEqual(
+            self.template["Conditions"]["ShouldEnableSyntheticInvocation"],
+            {"Fn::Equals": [{"Ref": "SyntheticInvocationEnabled"}, "true"]},
+        )
+        self.assertEqual(
+            self.template["Outputs"]["SyntheticInvocationState"]["Value"],
+            {"Fn::If": ["ShouldEnableSyntheticInvocation", "enabled-one-concurrent-invocation", "disabled"]},
         )
 
     def test_every_taggable_resource_is_marked_synthetic(self):

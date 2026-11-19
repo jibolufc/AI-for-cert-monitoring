@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "G3-SYNTH-20261119-001",
+  "recorded_at": "2026-11-19T13:20:42Z",
+  "environment": "synthetic-staging",
+  "region": "us-east-1",
+  "data_classification": "synthetic",
+  "real_data_enabled": false,
+  "collection_execution_authority": "none",
+  "scope": {
+    "stack": "ccp-g3-synthetic",
+    "function": "ccp-g3-ccp-g3-synthetic",
+    "evidence_bucket": "redacted-public-record",
+    "authorised_actions": [
+      "temporarily enable one reserved concurrent invocation through a reviewed change set",
+      "write one synthetic evidence object",
+      "restore and verify that object",
+      "confirm a real-data-labelled event is rejected",
+      "return reserved concurrency to zero through a reviewed change set"
+    ]
+  },
+  "local_validation": {
+    "command": "/usr/bin/python3 -m unittest discover -s tests -p 'test_g3_aws_*.py' -v",
+    "tests_run": 20,
+    "result": "passed",
+    "diff_check": "passed",
+    "source_state": "local changes were uncommitted at test time"
+  },
+  "deployment_window": {
+    "enable_change_set": {
+      "name": "g3-reviewed-enable-synthetic-20261119",
+      "change_set_id": "97bc81b5-615a-416f-a723-11767e1d7ece",
+      "reviewed_change": "SyntheticEvidenceFunction ReservedConcurrentExecutions 0 -> 1",
+      "replacement": false,
+      "operation_id": "9c8f1c6e-adfd-4b53-a718-0858772659a1",
+      "completed_at": "2026-11-19T13:16:12Z",
+      "result": "UPDATE_COMPLETE"
+    },
+    "disable_change_set": {
+      "name": "g3-reviewed-disable-synthetic-20261119",
+      "change_set_id": "054ba1b9-80f4-433c-825f-7e5745c88000",
+      "reviewed_change": "SyntheticEvidenceFunction ReservedConcurrentExecutions 1 -> 0",
+      "replacement": false,
+      "operation_id": "bf6d14e0-e80c-437d-ba45-a0c843bf5780",
+      "completed_at": "2026-11-19T13:20:42Z",
+      "result": "UPDATE_COMPLETE"
+    }
+  },
+  "tests": {
+    "synthetic_write": {
+      "request_id": "7b07a5e4-f723-473a-8440-77256d20770d",
+      "result": "written",
+      "object_key": "runs/7b07a5e4-f723-473a-8440-77256d20770d.json",
+      "sha256": "1137d336f6f365c8f9680d46a4e0c3d0b94d7130a05631bed972a0398e2d296e",
+      "duration_ms": 361.31
+    },
+    "synthetic_restore": {
+      "request_id": "176a2943-c0ce-43b4-bdd1-f5aee459d8a1",
+      "result": "restored",
+      "object_key": "runs/7b07a5e4-f723-473a-8440-77256d20770d.json",
+      "sha256": "1137d336f6f365c8f9680d46a4e0c3d0b94d7130a05631bed972a0398e2d296e",
+      "hash_match": true,
+      "duration_ms": 663.13
+    },
+    "real_data_negative": {
+      "request_id": "c6dbe5eb-41cf-4e97-95c1-6e6ac4bf58db",
+      "input_real_data_enabled": true,
+      "result": "rejected",
+      "error": "ValueError: real_data_enabled must be false",
+      "object_count_after_test": 1
+    }
+  },
+  "object_observation": {
+    "size_bytes": 208,
+    "etag": "8299790582a11ea24ceb48d48728d34b",
+    "server_side_encryption": "SSE-S3",
+    "storage_class": "STANDARD",
+    "lifecycle_expiration_observed": "2026-12-20T00:00:00Z",
+    "object_version_id": null,
+    "object_version_note": "The bounded operator lacked bucket-versioning read permission; no permission expansion was made solely to remove this evidence gap."
+  },
+  "final_state": {
+    "stack_status": "UPDATE_COMPLETE",
+    "synthetic_invocation_state": "disabled",
+    "reserved_concurrent_executions": 0,
+    "collection_execution_authority": "none",
+    "evidence_object_deleted": false
+  },
+  "control_assessment": {
+    "workload_identity": {
+      "status": "planned",
+      "assessment": "partial static and live role evidence exists, but the required explicit no-long-lived-credential test was not separately exported"
+    },
+    "least_privilege_rbac": {
+      "status": "planned",
+      "assessment": "bounded policies and an allowed invocation were observed, but a distinct IAM denied-access test was not completed"
+    },
+    "private_networking": {
+      "status": "planned",
+      "assessment": "private-subnet configuration exists, but a runtime ingress and egress policy test was not completed"
+    },
+    "encryption": {
+      "status": "planned",
+      "assessment": "SSE-S3 was observed on the object; a live transport-enforcement test was not completed"
+    },
+    "secret_management": {
+      "status": "planned",
+      "assessment": "no secret was created; a separate synthetic-secret lifecycle and access-log test is required"
+    },
+    "central_logging": {
+      "status": "planned",
+      "assessment": "correlated Lambda request IDs and log messages were observed, but tamper-resistance was not demonstrated"
+    },
+    "deployment_controls": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "change-set:g3-reviewed-enable-synthetic-20261119/97bc81b5-615a-416f-a723-11767e1d7ece",
+        "change-set:g3-reviewed-disable-synthetic-20261119/054ba1b9-80f4-433c-825f-7e5745c88000",
+        "cloudformation-operation:9c8f1c6e-adfd-4b53-a718-0858772659a1",
+        "cloudformation-operation:bf6d14e0-e80c-437d-ba45-a0c843bf5780"
+      ]
+    },
+    "backup_restore": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "lambda-request:7b07a5e4-f723-473a-8440-77256d20770d",
+        "lambda-request:176a2943-c0ce-43b4-bdd1-f5aee459d8a1",
+        "sha256:1137d336f6f365c8f9680d46a4e0c3d0b94d7130a05631bed972a0398e2d296e"
+      ]
+    }
+  },
+  "readiness_decision": {
+    "status": "blocked",
+    "g3_gate_passed": false,
+    "controls_required": 8,
+    "controls_demonstrated": 2,
+    "controls_remaining": 6,
+    "reason": "The controlled synthetic test proves deployment-window closure and hash-consistent restore only; six required control demonstrations and an accountable external G3 decision remain."
+  },
+  "limitations": [
+    "This record contains console-observed results, not a CloudTrail export or an independently signed attestation.",
+    "The staged live template used account-specific physical resource names and was not byte-identical to the environment-neutral repository template.",
+    "No customer, employer, certificate inventory, credential, production endpoint, or other real data was used.",
+    "The test does not establish production discovery coverage, production readiness, or authority to perform cryptographic changes."
+  ]
+}

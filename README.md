@@ -7,6 +7,18 @@ not its final product boundary. It is deliberately **not** a certificate
 authority, key-management service, migration executor, or autonomous remediation
 system.
 
+## Current gate status
+
+The G3 synthetic-staging control set is complete: seven controls are
+demonstrated and secret management is accepted as not applicable to the current
+secretless synthetic workload. This means `synthetic-staging-ready`, not a G3
+production pass; real-data and execution authority remain disabled.
+
+The active next milestone is **G4 production preparation**. Its ten governance,
+security, resilience and operational controls begin as unevidenced, so G4
+remains blocked while preparation proceeds. G4 work cannot authorise a public
+service, production data or cryptographic migration execution.
+
 Milestones 1 through 6 and the safe reference foundations for Milestones 7
 through 9 are executable end to end:
 
@@ -126,6 +138,22 @@ python3 -m venv .venv
   --plan examples/g3/synthetic-readiness-plan.json \
   --output build/g3/readiness-report.json \
   --as-of 2026-10-18T12:00:00Z
+
+# Assess G4 preparation without granting production authority.
+.venv/bin/python -m crypto_control_plane.g4_readiness_cli \
+  --plan examples/g4/synthetic-production-preparation-plan.json \
+  --output build/g4/readiness-report.json \
+  --as-of 2026-11-19T14:00:00Z
+```
+
+Assess G4 production preparation without granting production or migration
+execution authority:
+
+```bash
+crypto-control-plane-g4-readiness \
+  --plan examples/g4/synthetic-production-preparation-plan.json \
+  --output build/g4/readiness-report.json \
+  --as-of 2026-11-19T14:00:00Z
 ```
 
 The example produces a `CERT-001` alert because `lookalike-example.net` is not

@@ -46,6 +46,8 @@ Every material claim should use one of these states:
 | [Security, Risk and Assurance Plan](06-security-risk-and-assurance-plan.md) | What can go wrong, which controls exist, and which assurance claims are forbidden? |
 | [Delivery Roadmap and Governance](07-delivery-roadmap-and-governance.md) | How does the reference implementation become a governed migration platform? |
 | [Gate G3 Pilot Readiness Plan](10-g3-pilot-readiness-plan.md) | What must exist before any bounded real-data pilot can be considered? |
+| [Gate G4 Production-Preparation Plan](11-g4-production-readiness-plan.md) | What must be evidenced before production operation can be considered? |
+| [G3-C05 Secrets-Management Disposition](12-g3-c05-secrets-management-disposition.md) | Why is secret management not applicable to the current secretless synthetic scope, and what changes would reactivate it? |
 | [Project Evidence and Demonstration Guide](08-project-evidence-and-demo-guide.md) | How can a reviewer independently reproduce the current claims? |
 
 Related engineering records:

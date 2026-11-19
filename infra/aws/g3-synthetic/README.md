@@ -20,8 +20,8 @@ Before creating the stack, independently verify:
    neither creates nor requires one.
 6. The account operator uses MFA-backed administrative access, not root access.
 7. A budget owner and teardown owner are named for this temporary environment.
-8. G3-C05 secret-management evidence is planned separately; this stack creates
-   no secret and cannot by itself demonstrate the `secret_management` control.
+8. G3-C05 is recorded as not applicable to this secretless synthetic workload;
+   reassess it before adding any credential or authenticated integration.
 9. The dedicated CloudFormation service role and
    `ccp-g3-workload-boundary` policy were created by the reviewed operator
    bootstrap; the human operator does not hold direct provisioning permissions.
@@ -37,7 +37,8 @@ Do not deploy until all nine facts are recorded in the evidence directory.
 - dedicated Lambda workload identity with evidence-prefix, logging, and required
   network-interface permissions only;
 - Python 3.13 Lambda in the two private subnets with reserved concurrency set
-  to zero, keeping invocation disabled until a separately approved update;
+  to zero by default; an approved change set can temporarily allow exactly one
+  concurrent synthetic invocation;
 - explicit CloudWatch log group with 30-day retention.
 
 The S3 object and its SHA-256 value are the authoritative durable test evidence.
@@ -58,6 +59,13 @@ G3 workload. It creates:
 - AWS-style self-service MFA controls for the named existing IAM user;
 - an MFA-gated operator policy limited to the `ccp-g3-synthetic` stack and
   change sets named `g3-reviewed-*`;
+- MFA-gated read and invoke access to the exact synthetic Lambda, read-only
+  access to its `runs/` evidence prefix, and read-only access to its exact log
+  group; these permissions do not cover any other function, bucket prefix, or
+  log group;
+- MFA-gated, read-only inspection of the exact workload role and generated
+  evidence-bucket configuration, plus account-scoped EC2 describe APIs required
+  to verify the selected VPC, subnets, route tables, endpoint and security group;
 - a dedicated CloudFormation service role with template-derived provisioning
   permissions; and
 - the `ccp-g3-workload-boundary` managed policy required by the Lambda role.
@@ -93,6 +101,33 @@ require a separate, approved teardown decision.
    evidence.
 
 ## Test events
+
+### Approved test window
+
+The default `SyntheticInvocationEnabled=false` keeps reserved concurrency at
+zero. Do not bypass that lock with a direct Lambda configuration update.
+
+1. Upload the reviewed template under the bootstrap staging bucket's
+   `templates/` prefix.
+2. Create a change set named `g3-reviewed-enable-synthetic-YYYYMMDD` using the
+   dedicated CloudFormation service role. Change only
+   `SyntheticInvocationEnabled` from `false` to `true` and preserve all other
+   parameters.
+3. Review the change set. It must modify only the synthetic Lambda concurrency
+   and the `SyntheticInvocationState` output. Execute it only for the approved
+   test window.
+4. Run the write, restore, and real-data negative tests below. Retain the
+   invocation responses, object version/hash evidence, and relevant log events.
+5. Immediately create and execute a second reviewed change set that returns
+   `SyntheticInvocationEnabled` to `false`. Verify the stack output is
+   `disabled` before treating the test window as closed.
+
+Normal Lambda, S3, and CloudWatch charges may apply during this window. The
+change does not grant production collection or cryptographic execution
+authority, and every event must remain synthetic with
+`real_data_enabled: false`.
+
+### Synthetic events
 
 Write a synthetic evidence object:
 

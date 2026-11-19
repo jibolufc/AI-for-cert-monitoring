@@ -72,6 +72,28 @@ class G3AwsOperatorBootstrapTests(unittest.TestCase):
         self.assertNotIn("iam:AttachRolePolicy", actions)
         self.assertNotIn("s3:DeleteObject", actions)
         self.assertNotIn("s3:DeleteBucket", actions)
+        self.assertFalse(any(action.startswith("secretsmanager:") for action in actions))
+
+    def test_secretless_scope_grants_no_secrets_manager_permission(self):
+        for resource_name in (
+            "WorkloadPermissionsBoundary",
+            "CloudFormationExecutionRole",
+            "OperatorDeploymentPolicy",
+        ):
+            statements = self._statements(resource_name)
+            actions = {
+                action
+                for statement in statements
+                for action in (
+                    [statement["Action"]]
+                    if isinstance(statement["Action"], str)
+                    else statement["Action"]
+                )
+            }
+            self.assertFalse(
+                any(action.startswith("secretsmanager:") for action in actions),
+                resource_name,
+            )
 
     def test_workload_role_creation_requires_the_boundary(self):
         statements = self._statements("CloudFormationExecutionRole")
@@ -128,10 +150,95 @@ class G3AwsOperatorBootstrapTests(unittest.TestCase):
             item for item in statements
             if item["Sid"] == "ReadVerifiedNetworkChoicesForCloudFormation"
         )
-        self.assertEqual(lookup["Action"], ["ec2:DescribeVpcs", "ec2:DescribeSubnets"])
+        self.assertEqual(
+            lookup["Action"],
+            [
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeVpcEndpoints",
+                "ec2:DescribeVpcs",
+            ],
+        )
         self.assertEqual(lookup["Resource"], "*")
         self.assertEqual(lookup["Condition"], {"Bool": {"aws:MultiFactorAuthPresent": "true"}})
 
+    def test_operator_can_read_only_the_exact_workload_role(self):
+        statements = self._statements("OperatorDeploymentPolicy")
+        role = next(item for item in statements if item["Sid"] == "ReadExactSyntheticWorkloadRole")
+        self.assertEqual(
+            role["Action"],
+            ["iam:GetRole", "iam:GetRolePolicy", "iam:ListAttachedRolePolicies", "iam:ListRolePolicies"],
+        )
+        self.assertEqual(
+            role["Resource"],
+            {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-SyntheticWorkloadRole-*"},
+        )
+        self.assertEqual(role["Condition"], {"Bool": {"aws:MultiFactorAuthPresent": "true"}})
+
+    def test_operator_can_invoke_only_the_exact_synthetic_runner_with_mfa(self):
+        statements = self._statements("OperatorDeploymentPolicy")
+        runner = next(item for item in statements if item["Sid"] == "ReadAndInvokeExactSyntheticRunner")
+        self.assertIn("lambda:InvokeFunction", runner["Action"])
+        self.assertEqual(
+            runner["Resource"],
+            {
+                "Fn::Sub": (
+                    "arn:${AWS::Partition}:lambda:${TargetRegion}:${AWS::AccountId}:"
+                    "function:ccp-g3-${TargetStackName}"
+                )
+            },
+        )
+        self.assertEqual(runner["Condition"], {"Bool": {"aws:MultiFactorAuthPresent": "true"}})
+
+    def test_operator_evidence_reads_are_prefix_bounded_and_mfa_gated(self):
+        statements = self._statements("OperatorDeploymentPolicy")
+        objects = next(item for item in statements if item["Sid"] == "ReadSyntheticEvidenceObjectsOnly")
+        listing = next(item for item in statements if item["Sid"] == "ListSyntheticEvidencePrefixOnly")
+        logs = next(item for item in statements if item["Sid"] == "ReadExactSyntheticLogGroup")
+
+        self.assertEqual(objects["Action"], "s3:GetObject")
+        self.assertEqual(
+            objects["Resource"],
+            {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*/runs/*"},
+        )
+        self.assertEqual(listing["Action"], "s3:ListBucket")
+        self.assertEqual(listing["Condition"]["StringLike"]["s3:prefix"], ["runs", "runs/*"])
+        self.assertEqual(
+            logs["Resource"],
+            {
+                "Fn::Sub": (
+                    "arn:${AWS::Partition}:logs:${TargetRegion}:${AWS::AccountId}:"
+                    "log-group:/aws/lambda/ccp-g3-${TargetStackName}:*"
+                )
+            },
+        )
+        for statement in (objects, listing, logs):
+            self.assertEqual(statement["Condition"]["Bool"]["aws:MultiFactorAuthPresent"], "true")
+
+    def test_operator_can_read_but_not_mutate_evidence_bucket_configuration(self):
+        statements = self._statements("OperatorDeploymentPolicy")
+        config = next(
+            item for item in statements
+            if item["Sid"] == "ReadSyntheticEvidenceBucketConfiguration"
+        )
+        self.assertEqual(
+            config["Action"],
+            [
+                "s3:GetBucketLocation",
+                "s3:GetBucketPolicy",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:GetBucketVersioning",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetLifecycleConfiguration",
+            ],
+        )
+        self.assertTrue(all(action.startswith("s3:Get") for action in config["Action"]))
+        self.assertEqual(
+            config["Resource"],
+            {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*"},
+        )
+        self.assertEqual(config["Condition"], {"Bool": {"aws:MultiFactorAuthPresent": "true"}})
 
 if __name__ == "__main__":
     unittest.main()

@@ -17,6 +17,8 @@ REQUIRED_STAGING_CONTROLS = (
     "backup_restore",
 )
 
+SYNTHETIC_NOT_APPLICABLE_CONTROLS = frozenset({"secret_management"})
+
 
 class G3ReadinessGate:
     """Assess G3 evidence without granting collection or production authority."""
@@ -39,12 +41,20 @@ class G3ReadinessGate:
             unmet.append("prohibited operations are incomplete: " + ", ".join(missing_prohibitions))
 
         demonstrated = 0
+        not_applicable = 0
         for control_name in REQUIRED_STAGING_CONTROLS:
             control = plan["controls"][control_name]
             if control["status"] == "demonstrated" and control["evidence_refs"]:
                 demonstrated += 1
+            elif (
+                plan["environment"] == "synthetic-staging"
+                and control_name in SYNTHETIC_NOT_APPLICABLE_CONTROLS
+                and control["status"] == "not-applicable"
+                and control["evidence_refs"]
+            ):
+                not_applicable += 1
             else:
-                unmet.append(f"control is not evidenced as demonstrated: {control_name}")
+                unmet.append(f"control is not evidenced as demonstrated or accepted not applicable: {control_name}")
 
         if plan["environment"] == "synthetic-staging":
             self._assess_synthetic(plan, unmet)
@@ -68,7 +78,8 @@ class G3ReadinessGate:
             "control_summary": {
                 "required": len(REQUIRED_STAGING_CONTROLS),
                 "demonstrated": demonstrated,
-                "remaining": len(REQUIRED_STAGING_CONTROLS) - demonstrated,
+                "not_applicable": not_applicable,
+                "remaining": len(REQUIRED_STAGING_CONTROLS) - demonstrated - not_applicable,
             },
             "unmet_requirements": sorted(set(unmet)),
             "limitations": [

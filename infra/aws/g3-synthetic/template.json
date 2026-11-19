@@ -7,6 +7,10 @@
         {
           "Label": {"default": "Verified existing network"},
           "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint", "WorkloadPermissionsBoundaryArn"]
+        },
+        {
+          "Label": {"default": "Approved synthetic test window"},
+          "Parameters": ["SyntheticInvocationEnabled"]
         }
       ],
       "ParameterLabels": {
@@ -14,7 +18,8 @@
         "PrivateSubnetIds": {"default": "Two verified private subnets"},
         "PrivateRouteTableIds": {"default": "Route tables associated with the private subnets"},
         "CreateS3GatewayEndpoint": {"default": "Create an S3 gateway endpoint only if one is not already associated"},
-        "WorkloadPermissionsBoundaryArn": {"default": "Approved permissions boundary for the synthetic Lambda role"}
+        "WorkloadPermissionsBoundaryArn": {"default": "Approved permissions boundary for the synthetic Lambda role"},
+        "SyntheticInvocationEnabled": {"default": "Temporarily enable one concurrent synthetic invocation"}
       }
     }
   },
@@ -44,10 +49,17 @@
       "AllowedPattern": "^arn:(aws|aws-us-gov|aws-cn):iam::[0-9]{12}:policy/ccp-g3-workload-boundary$",
       "ConstraintDescription": "Use the ccp-g3-workload-boundary policy created by the approved operator bootstrap.",
       "Description": "Permissions boundary that caps the Lambda workload role even if a future template change attempts to widen its inline policy."
+    },
+    "SyntheticInvocationEnabled": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": ["true", "false"],
+      "Description": "Set to true only in an approved, time-bounded synthetic test change set. Return to false immediately after write, restore, and negative tests."
     }
   },
   "Conditions": {
-    "ShouldCreateS3GatewayEndpoint": {"Fn::Equals": [{"Ref": "CreateS3GatewayEndpoint"}, "true"]}
+    "ShouldCreateS3GatewayEndpoint": {"Fn::Equals": [{"Ref": "CreateS3GatewayEndpoint"}, "true"]},
+    "ShouldEnableSyntheticInvocation": {"Fn::Equals": [{"Ref": "SyntheticInvocationEnabled"}, "true"]}
   },
   "Resources": {
     "SyntheticEvidenceBucket": {
@@ -249,7 +261,7 @@
         "Handler": "index.handler",
         "MemorySize": 128,
         "Timeout": 15,
-        "ReservedConcurrentExecutions": 0,
+        "ReservedConcurrentExecutions": {"Fn::If": ["ShouldEnableSyntheticInvocation", 1, 0]},
         "Role": {"Fn::GetAtt": ["SyntheticWorkloadRole", "Arn"]},
         "VpcConfig": {
           "SecurityGroupIds": [{"Ref": "SyntheticWorkloadSecurityGroup"}],
@@ -342,6 +354,10 @@
     "CollectionExecutionAuthority": {
       "Description": "This stack cannot grant real-data or cryptographic execution authority",
       "Value": "none"
+    },
+    "SyntheticInvocationState": {
+      "Description": "Whether the approved synthetic-only test window is temporarily enabled",
+      "Value": {"Fn::If": ["ShouldEnableSyntheticInvocation", "enabled-one-concurrent-invocation", "disabled"]}
     }
   }
 }

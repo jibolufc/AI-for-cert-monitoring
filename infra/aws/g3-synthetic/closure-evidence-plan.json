@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "G3-CLOSURE-20261119-001",
+  "environment": "ccp-g3-synthetic",
+  "data_classification": "synthetic",
+  "real_data_enabled": false,
+  "collection_execution_authority": "none",
+  "production_operating_authority": "none",
+  "preconditions": [
+    "The stack output SyntheticInvocationState is disabled before and after every live probe window.",
+    "Every template update is reviewed as a CloudFormation change set using the dedicated service role.",
+    "The change set must have no unexpected replacement, public endpoint, public ingress, or execution-authority change.",
+    "Only generated synthetic values may be used; no customer, certificate inventory, credential, hostname, or production endpoint is authorised.",
+    "Every live probe must record request ID, UTC timestamp, expected result, actual result, and an integrity hash where applicable."
+  ],
+  "controls": {
+    "G3-C01": {
+      "name": "workload_identity",
+      "current_status": "demonstrated",
+      "static_evidence": [
+        "Lambda role reference is explicit.",
+        "Environment variables contain no access-key variables.",
+        "Inline function source contains no embedded AWS access-key configuration."
+      ],
+      "live_evidence_required": "Export the live function configuration and execution-role reference, then correlate one invocation request ID with the assumed workload role.",
+      "stop_condition": "Any long-lived credential, unexpected environment variable, or role outside the reviewed stack is observed."
+    },
+    "G3-C02": {
+      "name": "least_privilege_rbac",
+      "current_status": "demonstrated",
+      "static_evidence": [
+        "Operator invocation and evidence reads are MFA-gated and exact-resource scoped.",
+        "Workload permissions exclude object deletion and cryptographic lifecycle APIs."
+      ],
+      "live_evidence_required": "Record one permitted synthetic operation and one explicitly denied out-of-scope IAM operation without widening policy to make the test convenient.",
+      "stop_condition": "An out-of-scope operation succeeds or the test requires administrator access on the workload identity."
+    },
+    "G3-C03": {
+      "name": "private_networking",
+      "current_status": "demonstrated",
+      "static_evidence": [
+        "Lambda is attached to two declared private subnets.",
+        "The security group has no ingress and permits only TCP 443 egress.",
+        "The stack creates no NAT gateway, internet gateway, public IP, or load balancer."
+      ],
+      "live_evidence_required": "Export subnet public-IP settings, route tables, security-group rules, VPC endpoint routes, and a successful private S3 request correlation.",
+      "captured_live_evidence": [
+        "Both workload subnets show No (private), no auto-assigned public IPv4 address and no auto-assigned IPv6 address.",
+        "Both private route tables contain only the local VPC route and the active S3 gateway-endpoint route; no default internet route was observed.",
+        "The S3 gateway endpoint is Available and attached to both private route tables.",
+        "The workload security group shows zero inbound entries and one outbound entry; the reviewed template defines that entry as TCP 443.",
+        "The controlled write and restore requests completed through the reviewed private workload path."
+      ],
+      "stop_condition": "A public IP, direct internet-gateway route, public ingress rule, or unexpected egress path is observed."
+    },
+    "G3-C04": {
+      "name": "encryption",
+      "current_status": "demonstrated",
+      "static_evidence": [
+        "The bucket requires TLS through an explicit aws:SecureTransport deny.",
+        "The bucket and written object use SSE-S3 encryption."
+      ],
+      "live_evidence_required": "Export live bucket encryption and policy configuration and record an insecure-transport denial without exposing credentials.",
+      "captured_live_evidence": [
+        "Live bucket properties show SSE-S3 default encryption, SSE-C blocked and versioning enabled.",
+        "Block all public access is On and the live bucket policy denies requests where aws:SecureTransport is false.",
+        "A credential-free anonymous HTTP probe returned 403 Forbidden.",
+        "The evidence lifecycle rule expires current versions and permanently deletes noncurrent versions after 30 days."
+      ],
+      "stop_condition": "The live bucket lacks encryption, public blocking, or the TLS-only deny."
+    },
+    "G3-C05": {
+      "name": "secret_management",
+      "current_status": "not-applicable-secretless-synthetic-scope",
+      "static_evidence": [
+        "docs/project/12-g3-c05-secrets-management-disposition.md records why the current synthetic workload is secretless, limits the exception to synthetic staging, and names the triggers that reactivate C05.",
+        "evidence/g3/2026-11-19-c05-not-applicable-decision.json records the explicit disposition, zero remaining synthetic controls, continuing lack of execution authority, and external-decision limitation.",
+        "The deployed workload template creates no secret, interface endpoint, credential parameter or Secrets Manager permission."
+      ],
+      "live_evidence_required": "None while the workload remains secretless synthetic staging. Reopen C05 before introducing any credential, authenticated integration, real data or execution authority.",
+      "stop_condition": "The workload is no longer secretless or leaves synthetic staging without C05 being reopened."
+    },
+    "G3-C06": {
+      "name": "central_logging",
+      "current_status": "demonstrated",
+      "static_evidence": [
+        "The function has an explicit 30-day CloudWatch log group.",
+        "The workload role can write only its exact log group."
+      ],
+      "live_evidence_required": "Export correlated write, restore, and rejection events and demonstrate that the workload identity cannot alter retention or delete the log group.",
+      "captured_live_evidence": [
+        "Write, restore and real-data-rejection request IDs were correlated in the exact Lambda log stream.",
+        "An authoritative root review showed live retention of 1 month, matching the reviewed 30-day template setting.",
+        "The workload policy grants only CreateLogStream and PutLogEvents on the exact log group and does not grant retention changes or deletion."
+      ],
+      "stop_condition": "Request IDs cannot be correlated, retention differs from the reviewed value, or the workload can delete or reconfigure logs."
+    }
+  },
+  "completion_rule": "Do not change a control to demonstrated until the named live evidence is captured, independently reviewed, and referenced by hash or immutable record. A not-applicable disposition is accepted only for G3-C05 in the documented secretless synthetic scope. Synthetic-staging readiness does not pass G3; a real-data pilot still requires an external accountable decision."
+}

@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "G3-CLOSURE-READONLY-20261119-001",
+  "recorded_at": "2026-11-19T14:57:16Z",
+  "environment": "synthetic-staging",
+  "region": "us-east-1",
+  "data_classification": "synthetic",
+  "real_data_enabled": false,
+  "collection_execution_authority": "none",
+  "production_operating_authority": "none",
+  "observations": {
+    "workload_identity": {
+      "live_execution_role_present": true,
+      "environment_variable_count": 3,
+      "environment_variable_names": [
+        "EVIDENCE_BUCKET",
+        "EVIDENCE_LEVEL",
+        "REAL_DATA_ENABLED"
+      ],
+      "embedded_access_key_variables_observed": false,
+      "real_data_flag": "false",
+      "static_test": "test_function_uses_role_credentials_not_embedded_credentials",
+      "assessment": "demonstrated"
+    },
+    "least_privilege_rbac": {
+      "allowed_operation": "MFA-backed invocation of the exact synthetic Lambda during the approved test window",
+      "newly_verified_read_operations": [
+        "exact workload-role configuration",
+        "exact workload security group and VPC configuration",
+        "private subnets, route tables and S3 gateway endpoint",
+        "exact evidence-bucket encryption, versioning, public-access, policy and lifecycle configuration"
+      ],
+      "still_denied_out_of_scope_operations_observed": [
+        "iam:ListPolicies",
+        "access-analyzer:ListPolicyGenerations",
+        "ec2:DescribeSecurityGroupRules",
+        "ec2:DescribeVpcEndpointServices",
+        "ec2:DescribeInternetGateways",
+        "ec2:DescribeNatGateways",
+        "s3:ListTagsForResource",
+        "s3:GetReplicationConfiguration"
+      ],
+      "denial_subject": "bounded human operator",
+      "static_policy_evidence": [
+        "operator policy is MFA-gated and exact-resource scoped",
+        "workload role excludes object deletion and cryptographic lifecycle APIs",
+        "CloudFormation deployment uses a dedicated service role and permissions boundary"
+      ],
+      "assessment": "demonstrated"
+    },
+    "private_networking": {
+      "private_subnet_count": 2,
+      "private_subnet_availability_zones": [
+        "us-east-1a",
+        "us-east-1b"
+      ],
+      "internet_access_for_each_subnet": "No (private)",
+      "auto_assign_public_ipv4_for_each_subnet": false,
+      "auto_assign_ipv6_for_each_subnet": false,
+      "private_route_table_count": 2,
+      "routes_per_private_route_table": [
+        "local VPC route",
+        "active S3 managed-prefix-list route through the S3 gateway endpoint"
+      ],
+      "default_internet_route_observed": false,
+      "s3_gateway_endpoint_state": "Available",
+      "s3_gateway_endpoint_route_table_count": 2,
+      "security_group_inbound_rule_count": 0,
+      "security_group_outbound_rule_count": 1,
+      "security_group_description": "No-ingress synthetic workload with HTTPS egress constrained by private routing and the S3 gateway endpoint.",
+      "static_evidence_available": true,
+      "live_route_and_security_group_export_complete": true,
+      "assessment": "demonstrated"
+    },
+    "encryption": {
+      "object_sse_s3_previously_observed": true,
+      "bucket_default_encryption": "SSE-S3",
+      "sse_c_blocked": true,
+      "bucket_versioning": "Enabled",
+      "block_all_public_access": "On",
+      "bucket_policy_secure_transport_deny": true,
+      "anonymous_plaintext_probe": {
+        "credential_sent": false,
+        "protocol": "http",
+        "status": 403,
+        "result": "Forbidden",
+        "request_id": "KAHBNR8WX6BZ82XX",
+        "observed_at": "2026-11-19T14:57:16Z"
+      },
+      "lifecycle_rule": {
+        "name": "expire-synthetic-evidence",
+        "status": "Enabled",
+        "scope": "Entire bucket",
+        "current_version_expiry_days": 30,
+        "noncurrent_version_deletion_days": 30
+      },
+      "assessment": "demonstrated"
+    },
+    "central_logging": {
+      "log_stream_count_observed": 1,
+      "write_request_correlated": "7b07a5e4-f723-473a-8440-77256d20770d",
+      "restore_request_correlated": "176a2943-c0ce-43b4-bdd1-f5aee459d8a1",
+      "real_data_rejection_correlated": "c6dbe5eb-41cf-4e97-95c1-6e6ac4bf58db",
+      "write_restore_hash_match": true,
+      "bounded_operator_displayed_retention_before_authoritative_review": "Never expire",
+      "authoritative_root_review_retention": "1 month",
+      "reviewed_template_retention_days": 30,
+      "retention_consistency": "matched-reviewed-template-after-authoritative-verification",
+      "tamper_resistance_demonstrated": false,
+      "assessment": "demonstrated"
+    }
+  },
+  "control_summary": {
+    "required": 8,
+    "demonstrated": 7,
+    "remaining": 1,
+    "demonstrated_controls": [
+      "workload_identity",
+      "least_privilege_rbac",
+      "private_networking",
+      "encryption",
+      "central_logging",
+      "deployment_controls",
+      "backup_restore"
+    ],
+    "remaining_controls": [
+      "secret_management"
+    ]
+  },
+  "readiness_decision": {
+    "status": "blocked",
+    "g3_gate_passed": false,
+    "collection_execution_authority": "none",
+    "reason": "Seven of eight controls are demonstrated. Secret management remains a separate, unexecuted change and G3 is not passed."
+  },
+  "next_actions": [
+    "Design and cost-review the separate synthetic-secret lifecycle test, including its required private network path and confirmed teardown procedure.",
+    "Create and inspect a separate change set for the synthetic-secret test; do not execute it without a new approval.",
+    "After C05 evidence is complete, obtain the external accountable G3 decision before granting any broader operating authority."
+  ],
+  "limitations": [
+    "This is a console-observed, sanitised record; account, bucket and role identifiers are intentionally omitted.",
+    "The bounded operator could read the exact workload resources but remained denied unrelated account-wide discovery APIs.",
+    "The console could show zero inbound and one outbound security-group entry, while exact security-group-rule expansion remained denied; the reviewed stack template supplies the exact TCP 443 egress declaration.",
+    "The plaintext probe was anonymous and credential-free; it demonstrated a live 403 response without exposing an AWS session credential.",
+    "Central-log tamper resistance is supported by role and policy boundaries rather than a destructive live tamper attempt.",
+    "No production or third-party target was accessed."
+  ]
+}

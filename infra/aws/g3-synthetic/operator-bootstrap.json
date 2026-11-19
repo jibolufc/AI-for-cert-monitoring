@@ -346,8 +346,78 @@
             {
               "Sid": "ReadVerifiedNetworkChoicesForCloudFormation",
               "Effect": "Allow",
-              "Action": ["ec2:DescribeVpcs", "ec2:DescribeSubnets"],
+              "Action": [
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeVpcEndpoints",
+                "ec2:DescribeVpcs"
+              ],
               "Resource": "*",
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ReadExactSyntheticWorkloadRole",
+              "Effect": "Allow",
+              "Action": [
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListRolePolicies"
+              ],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-SyntheticWorkloadRole-*"},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ReadAndInvokeExactSyntheticRunner",
+              "Effect": "Allow",
+              "Action": [
+                "lambda:GetFunction",
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetPolicy",
+                "lambda:ListTags",
+                "lambda:ListVersionsByFunction",
+                "lambda:InvokeFunction"
+              ],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:lambda:${TargetRegion}:${AWS::AccountId}:function:ccp-g3-${TargetStackName}"},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ReadSyntheticEvidenceObjectsOnly",
+              "Effect": "Allow",
+              "Action": "s3:GetObject",
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*/runs/*"},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ReadSyntheticEvidenceBucketConfiguration",
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetBucketLocation",
+                "s3:GetBucketPolicy",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:GetBucketVersioning",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetLifecycleConfiguration"
+              ],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*"},
+              "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
+            },
+            {
+              "Sid": "ListSyntheticEvidencePrefixOnly",
+              "Effect": "Allow",
+              "Action": "s3:ListBucket",
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:s3:::${TargetStackName}-*"},
+              "Condition": {
+                "Bool": {"aws:MultiFactorAuthPresent": "true"},
+                "StringLike": {"s3:prefix": ["runs", "runs/*"]}
+              }
+            },
+            {
+              "Sid": "ReadExactSyntheticLogGroup",
+              "Effect": "Allow",
+              "Action": ["logs:DescribeLogStreams", "logs:GetLogEvents", "logs:FilterLogEvents"],
+              "Resource": {"Fn::Sub": "arn:${AWS::Partition}:logs:${TargetRegion}:${AWS::AccountId}:log-group:/aws/lambda/ccp-g3-${TargetStackName}:*"},
               "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}}
             },
             {

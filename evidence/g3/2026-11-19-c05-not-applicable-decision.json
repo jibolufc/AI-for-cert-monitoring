@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "decision_id": "g3-c05-secretless-synthetic-scope-2026-11-19",
+  "recorded_at": "2026-11-19T15:18:36Z",
+  "control_id": "G3-C05",
+  "control_name": "secret_management",
+  "environment": "synthetic-staging",
+  "disposition": "not-applicable",
+  "decision_source": "explicit project-owner direction in the controlled project session",
+  "scope_basis": [
+    "The workload uses platform-supplied temporary AWS role credentials and stores no application secret.",
+    "The workload has no authenticated production integration or real-data source.",
+    "The workload accepts synthetic data only and has no collection or cryptographic execution authority.",
+    "Creating a managed secret solely for evidence would add cost, permissions, network resources and teardown risk without mitigating a present secret-handling risk."
+  ],
+  "reactivation_triggers": [
+    "Any password, token, private key, client secret or credential is introduced.",
+    "An authenticated collector, production data source, database or third-party API is introduced.",
+    "Real data is enabled or the environment changes from synthetic-staging.",
+    "Collection, migration or cryptographic execution authority is proposed."
+  ],
+  "control_summary": {
+    "required": 8,
+    "demonstrated": 7,
+    "not_applicable": 1,
+    "remaining": 0
+  },
+  "readiness_decision": {
+    "status": "synthetic-staging-ready",
+    "g3_gate_passed": false,
+    "collection_execution_authority": "none"
+  },
+  "limitations": [
+    "This disposition applies only to the current secretless synthetic-staging scope.",
+    "It does not demonstrate secret retrieval, rotation, revocation or audit controls.",
+    "It does not authorise real data, production integration or cryptographic lifecycle operations.",
+    "A real-data pilot still requires a separate external accountable G3 decision."
+  ],
+  "supporting_record": "docs/project/12-g3-c05-secrets-management-disposition.md"
+}

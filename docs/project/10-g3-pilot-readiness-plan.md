@@ -13,6 +13,45 @@ verified private subnets and their route tables as deployment inputs, creates no
 NAT gateway or public workload, and preserves `collection_execution_authority:
 none`.
 
+### Latest controlled test: 19 November 2026
+
+The approved synthetic write, restore, negative real-data, and shutdown sequence
+completed in `us-east-1`. The written and restored object hashes matched, the
+real-data-labelled event was rejected before another object was written, and the
+reviewed close-window change set returned the Lambda reserved concurrency to
+zero. The final CloudFormation output was `SyntheticInvocationState: disabled`;
+`CollectionExecutionAuthority` remained `none`.
+
+The sanitised evidence record is
+[`evidence/g3/2026-11-19-controlled-synthetic-test.json`](../../evidence/g3/2026-11-19-controlled-synthetic-test.json).
+It demonstrates G3-C07 and G3-C08 only. The other six controls remain planned
+because their minimum tests were not completed. Gate G3 therefore remains
+`blocked`, with `g3_gate_passed: false`; the test is not authority to use real
+data or perform cryptographic lifecycle operations.
+
+The follow-up read-only evidence pass demonstrated G3-C01 workload identity,
+G3-C02 least-privilege RBAC, G3-C03 private networking, G3-C04 encryption, and
+G3-C06 central logging. Together with the controlled test evidence for G3-C07
+and G3-C08, seven of eight controls are now demonstrated. G3-C05 secret
+management is recorded as not applicable to the current secretless synthetic
+workload. The synthetic control set therefore has zero remaining controls, but
+`g3_gate_passed` remains false and `collection_execution_authority` remains
+`none`. An authoritative review confirmed live log retention of one month,
+matching the reviewed 30-day template, and a credential-free HTTP probe
+confirmed the bucket's insecure-transport denial.
+
+The sanitised follow-up record is
+[`evidence/g3/2026-11-19-closure-readonly-observations.json`](../../evidence/g3/2026-11-19-closure-readonly-observations.json).
+The reviewed closure sequence for the remaining controls is recorded in
+[`infra/aws/g3-synthetic/closure-evidence-plan.json`](../../infra/aws/g3-synthetic/closure-evidence-plan.json).
+The scoped G3-C05 decision, its conditions and mandatory reactivation triggers
+are recorded in
+[`docs/project/12-g3-c05-secrets-management-disposition.md`](12-g3-c05-secrets-management-disposition.md)
+and
+[`evidence/g3/2026-11-19-c05-not-applicable-decision.json`](../../evidence/g3/2026-11-19-c05-not-applicable-decision.json).
+G4 preparation may proceed alongside that sequence, but it cannot waive or
+replace any G3 evidence requirement.
+
 ## Required staging evidence
 
 | ID | Control | Minimum evidence |
@@ -21,7 +60,7 @@ none`.
 | G3-C02 | Least-privilege RBAC | Role matrix plus allowed/denied access test |
 | G3-C03 | Private networking | Network diagram and egress/ingress policy test |
 | G3-C04 | Encryption | Storage and transport configuration evidence |
-| G3-C05 | Secret management | Secret lifecycle and access-log evidence using synthetic secrets |
+| G3-C05 | Secret management | Secret lifecycle evidence, or an accountable not-applicable decision for a demonstrably secretless synthetic scope |
 | G3-C06 | Central logging | Tamper-resistant log destination and correlation test |
 | G3-C07 | Deployment controls | Reviewed build/deploy evidence, pinned inputs, and rollback procedure |
 | G3-C08 | Backup and restore | Successful synthetic restore with measured recovery time |

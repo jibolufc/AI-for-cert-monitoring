@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/g4-readiness-plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "plan_id", "environment", "requested_by", "approved_by",
+    "service_id", "service_owner", "security_owner", "valid_from", "expires_at",
+    "evidence_level", "data_classification", "real_data_enabled",
+    "public_endpoint_enabled", "production_traffic_enabled", "execution_authority",
+    "known_limitations", "controls"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "plan_id": {"type": "string", "format": "uuid"},
+    "environment": {"const": "production-preparation"},
+    "requested_by": {"type": "string", "minLength": 1},
+    "approved_by": {"type": "string", "minLength": 1},
+    "service_id": {"type": "string", "minLength": 1},
+    "service_owner": {"type": "string", "minLength": 1},
+    "security_owner": {"type": "string", "minLength": 1},
+    "valid_from": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "evidence_level": {"const": "simulated"},
+    "data_classification": {"const": "synthetic"},
+    "real_data_enabled": {"const": false},
+    "public_endpoint_enabled": {"const": false},
+    "production_traffic_enabled": {"const": false},
+    "execution_authority": {"const": "none"},
+    "known_limitations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service_ownership", "service_level_objectives", "production_identity_access",
+        "monitoring_alerting", "incident_response", "backup_failover_recovery",
+        "secure_delivery_supply_chain", "independent_security_testing",
+        "data_protection_retention", "operational_runbooks_support"
+      ],
+      "properties": {
+        "service_ownership": {"$ref": "#/$defs/control"},
+        "service_level_objectives": {"$ref": "#/$defs/control"},
+        "production_identity_access": {"$ref": "#/$defs/control"},
+        "monitoring_alerting": {"$ref": "#/$defs/control"},
+        "incident_response": {"$ref": "#/$defs/control"},
+        "backup_failover_recovery": {"$ref": "#/$defs/control"},
+        "secure_delivery_supply_chain": {"$ref": "#/$defs/control"},
+        "independent_security_testing": {"$ref": "#/$defs/control"},
+        "data_protection_retention": {"$ref": "#/$defs/control"},
+        "operational_runbooks_support": {"$ref": "#/$defs/control"}
+      }
+    }
+  },
+  "$defs": {
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence_refs"],
+      "properties": {
+        "status": {"enum": ["demonstrated", "planned", "not-applicable"]},
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
