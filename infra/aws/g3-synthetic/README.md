@@ -17,7 +17,9 @@ Before creating the stack, independently verify:
 4. Record whether an S3 gateway endpoint is already associated with either
    private route table; do not create a duplicate endpoint route.
 5. Any NAT gateway and its recurring cost are explicitly accepted; this stack
-   neither creates nor requires one.
+   neither creates nor requires one. Security-group egress is limited to the
+   S3 prefix list, so an existing NAT gateway does not give the workload
+   internet access.
 6. The account operator uses MFA-backed administrative access, not root access.
 7. A budget owner and teardown owner are named for this temporary environment.
 8. G3-C05 secret-management evidence is planned separately; this stack creates
@@ -26,14 +28,22 @@ Before creating the stack, independently verify:
    `ccp-g3-workload-boundary` policy were created by the reviewed operator
    bootstrap; the human operator does not hold direct provisioning permissions.
 
-Do not deploy until all nine facts are recorded in the evidence directory.
+10. The ID of the AWS-managed prefix list `com.amazonaws.us-east-1.s3` is
+    recorded, using the same read-only identity that verifies facts 2 to 4
+    (the bootstrap operator policy cannot describe prefix lists):
+    `aws ec2 describe-managed-prefix-lists --region us-east-1 --filters
+    Name=prefix-list-name,Values=com.amazonaws.us-east-1.s3
+    --query 'PrefixLists[0].PrefixListId'`.
+
+Do not deploy until all ten facts are recorded in the evidence directory.
 
 ## Resources
 
 - private, versioned S3 bucket with SSE-S3 encryption, public-access blocking,
   TLS-only access policy, and 30-day synthetic-evidence lifecycle;
 - S3 gateway VPC endpoint attached only to the verified private route tables;
-- no-ingress security group with HTTPS-only egress;
+- no-ingress security group whose only egress is HTTPS to the regional S3
+  prefix list (no CIDR destinations);
 - dedicated Lambda workload identity with evidence-prefix, logging, and required
   network-interface permissions only;
 - Python 3.13 Lambda in the two private subnets with reserved concurrency set
@@ -82,15 +92,27 @@ require a separate, approved teardown decision.
 4. Select the verified VPC, two private subnet IDs, and their route-table IDs.
 5. Set `WorkloadPermissionsBoundaryArn` to the output of the approved operator
    bootstrap and select its dedicated CloudFormation service role.
-6. Leave `CreateS3GatewayEndpoint` as `false` if the route tables already have an
+6. Set `S3PrefixListId` to the ID recorded for fact 10.
+7. Leave `CreateS3GatewayEndpoint` as `false` if the route tables already have an
    S3 gateway endpoint. Set it to `true` only when read-only inspection proves
    there is no existing endpoint route.
-7. Keep rollback enabled. Do not enable permissions that CloudFormation does not
+8. Keep rollback enabled. Do not enable permissions that CloudFormation does not
    request.
-8. Acknowledge that the stack creates IAM resources, review the change set,
+9. Acknowledge that the stack creates IAM resources, review the change set,
    and create the stack.
-9. Preserve the stack events, outputs, and resource inventory as deployment
+10. Preserve the stack events, outputs, and resource inventory as deployment
    evidence.
+
+## Updating an existing stack to S3-only egress
+
+Stacks created before this change allow HTTPS egress to `0.0.0.0/0`. To apply
+the restriction, create a change set named `g3-reviewed-*` on
+`ccp-g3-synthetic` with the updated template and the new `S3PrefixListId`
+parameter, keeping every other parameter's previous value. The change set
+should show only `SyntheticWorkloadSecurityGroup` as Modify with Replacement
+`False`. Reject it if it shows any other resource change or any replacement.
+Record the change set and the security group's egress rules afterwards as
+G3-C03 evidence.
 
 ## Test events
 
