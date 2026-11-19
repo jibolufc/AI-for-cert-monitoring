@@ -171,6 +171,9 @@ accountable external decision.
 
 ## 11. Current G4 preparation position
 
+The recorded G3 synthetic-staging position (19 November 2026) is `blocked`,
+six of eight controls demonstrated; see `evidence/g3/2026-11-19-readiness-report.json`.
+
 G4 preparation is proceeding in parallel with G3 closure without creating a
 production service. The machine-checkable contract tracks ten production
 control areas and can report `g4-preparation-ready` only when each has evidence

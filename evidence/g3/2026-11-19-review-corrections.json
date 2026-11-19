@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "record_id": "G3-REVIEW-CORRECTIONS-20261119-001",
+  "recorded_at": "2026-11-19T17:00:00Z",
+  "reviewed_commit": "64c9cba",
+  "environment": "synthetic-staging",
+  "data_classification": "synthetic",
+  "real_data_enabled": false,
+  "collection_execution_authority": "none",
+  "purpose": "Corrects control statuses asserted in hashed G3 evidence without editing those records.",
+  "corrections": [
+    {
+      "id": "R1",
+      "control": "G3-C06",
+      "asserted": "demonstrated",
+      "corrected": "planned",
+      "reason": "Minimum evidence is a tamper-resistant log destination and correlation test; evidence/g3/2026-11-19-closure-readonly-observations.json records tamper_resistance_demonstrated: false.",
+      "retained_partial_evidence": [
+        "write, restore and real-data-rejection request IDs correlated in logs",
+        "30-day retention confirmed by authoritative review"
+      ],
+      "to_close": "Deny logs:DeleteLogGroup, logs:DeleteLogStream and logs:PutRetentionPolicy to all roles except a named break-glass role, record one denied call, or export logs to an S3 bucket with Object Lock."
+    },
+    {
+      "id": "R2",
+      "control": "G3-C05",
+      "asserted": "not-applicable (accepted)",
+      "corrected": "not-applicable (awaiting independent approval)",
+      "reason": "Decision source is the project owner, who is also the requester; the requirement wording was widened in the same commit that closed the control.",
+      "code_change": "G3ReadinessGate now counts not-applicable only when the control names approved_by different from the plan requested_by.",
+      "to_close": "Second approver signs the decision, or run a synthetic Secrets Manager test (create, retrieve by role, rotate, denied access, access log)."
+    },
+    {
+      "id": "R3",
+      "control": "all",
+      "asserted": "synthetic-staging-ready (hand-written)",
+      "corrected": "blocked, 6 of 8 (assessor output)",
+      "reason": "The readiness assessor had never been run on the live evidence; the example plan still reported blocked, 0 of 8.",
+      "evidence": [
+        "evidence/g3/2026-11-19-readiness-plan.json",
+        "evidence/g3/2026-11-19-readiness-report.json"
+      ]
+    },
+    {
+      "id": "R4",
+      "control": "G3-C07",
+      "asserted": "bootstrap stack must not be updated while workload exists",
+      "corrected": "update applied without a recorded exception",
+      "reason": "operator-bootstrap.json gained read permissions and lambda:InvokeFunction for the human operator; evidence shows them in use; no change-set ID recorded.",
+      "to_close": "Record the bootstrap change-set ID, execution time and approver here.",
+      "bootstrap_change_set_id": null
+    },
+    {
+      "id": "R5",
+      "control": "G3-C03",
+      "asserted": "demonstrated with HTTPS egress to 0.0.0.0/0",
+      "corrected": "demonstrated; template now restricts egress to the S3 prefix list (PR #4)",
+      "reason": "No internet route was observed, but DescribeNatGateways was denied and the security group allowed any destination.",
+      "to_close": "Apply the S3-only egress template to the live stack with a g3-reviewed-* change set and record the resulting egress rule.",
+      "live_stack_egress_updated": false
+    }
+  ],
+  "assessor_result": {
+    "status": "blocked",
+    "demonstrated": 6,
+    "not_applicable": 0,
+    "remaining": 2,
+    "g3_gate_passed": false
+  }
+}

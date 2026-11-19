@@ -30,15 +30,30 @@ because their minimum tests were not completed. Gate G3 therefore remains
 data or perform cryptographic lifecycle operations.
 
 The follow-up read-only evidence pass demonstrated G3-C01 workload identity,
-G3-C02 least-privilege RBAC, G3-C03 private networking, G3-C04 encryption, and
-G3-C06 central logging. Together with the controlled test evidence for G3-C07
-and G3-C08, seven of eight controls are now demonstrated. G3-C05 secret
-management is recorded as not applicable to the current secretless synthetic
-workload. The synthetic control set therefore has zero remaining controls, but
-`g3_gate_passed` remains false and `collection_execution_authority` remains
-`none`. An authoritative review confirmed live log retention of one month,
-matching the reviewed 30-day template, and a credential-free HTTP probe
-confirmed the bucket's insecure-transport denial.
+G3-C02 least-privilege RBAC, G3-C03 private networking and G3-C04 encryption.
+With G3-C07 and G3-C08 from the controlled test, six of eight controls are
+demonstrated.
+
+**Corrected on 19 November 2026 (review R1 to R5).** An earlier version of this
+section counted seven demonstrated controls and zero remaining. That was wrong:
+
+- G3-C06 central logging is **planned**, not demonstrated. Its minimum evidence
+  is a tamper-resistant log destination, and the observation record states
+  `tamper_resistance_demonstrated: false`. Correlation and the 30-day retention
+  (confirmed by an authoritative review) were observed and remain valid partial
+  evidence.
+- G3-C05 secret management has a not-applicable decision, but its source is the
+  project owner, who is also the requester. The assessor now requires a
+  not-applicable disposition to name an approver independent of the requester.
+- The plan's own approver is the same identity as its requester.
+
+The authoritative position is the assessor output, not prose:
+[`evidence/g3/2026-11-19-readiness-plan.json`](../../evidence/g3/2026-11-19-readiness-plan.json)
+assessed to
+[`evidence/g3/2026-11-19-readiness-report.json`](../../evidence/g3/2026-11-19-readiness-report.json):
+`blocked`, 6 demonstrated, 2 remaining, `g3_gate_passed: false`. The hashed
+evidence records are not edited; the correction is recorded in
+[`evidence/g3/2026-11-19-review-corrections.json`](../../evidence/g3/2026-11-19-review-corrections.json).
 
 The sanitised follow-up record is
 [`evidence/g3/2026-11-19-closure-readonly-observations.json`](../../evidence/g3/2026-11-19-closure-readonly-observations.json).
@@ -60,7 +75,7 @@ replace any G3 evidence requirement.
 | G3-C02 | Least-privilege RBAC | Role matrix plus allowed/denied access test |
 | G3-C03 | Private networking | Network diagram and egress/ingress policy test |
 | G3-C04 | Encryption | Storage and transport configuration evidence |
-| G3-C05 | Secret management | Secret lifecycle evidence, or an accountable not-applicable decision for a demonstrably secretless synthetic scope |
+| G3-C05 | Secret management | Secret lifecycle evidence, or a not-applicable decision for a demonstrably secretless synthetic scope approved by someone other than the requester |
 | G3-C06 | Central logging | Tamper-resistant log destination and correlation test |
 | G3-C07 | Deployment controls | Reviewed build/deploy evidence, pinned inputs, and rollback procedure |
 | G3-C08 | Backup and restore | Successful synthetic restore with measured recovery time |

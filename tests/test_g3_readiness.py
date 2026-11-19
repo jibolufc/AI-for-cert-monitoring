@@ -54,6 +54,7 @@ class G3ReadinessTests(unittest.TestCase):
         plan["controls"]["secret_management"] = {
             "status": "not-applicable",
             "evidence_refs": ["decision:g3-c05-secretless-synthetic-scope"],
+            "approved_by": "reference-security-reviewer",
         }
 
         report = self.gate.assess(plan, as_of=NOW)
@@ -78,6 +79,34 @@ class G3ReadinessTests(unittest.TestCase):
             "control is not evidenced as demonstrated or accepted not applicable: secret_management",
             report["unmet_requirements"],
         )
+
+    def test_not_applicable_requires_an_independent_approver(self):
+        for approver in (None, "g3-readiness-owner"):
+            plan = self.demonstrated_plan()
+            control = {
+                "status": "not-applicable",
+                "evidence_refs": ["decision:g3-c05-secretless-synthetic-scope"],
+            }
+            if approver:
+                control["approved_by"] = approver
+            plan["controls"]["secret_management"] = control
+            with self.subTest(approver=approver):
+                report = self.gate.assess(plan, as_of=NOW)
+                self.assertEqual(report["status"], "blocked")
+                self.assertEqual(report["control_summary"]["not_applicable"], 0)
+                self.assertIn(
+                    "not-applicable disposition needs an approver independent of the requester: secret_management",
+                    report["unmet_requirements"],
+                )
+
+    def test_recorded_g3_plan_matches_committed_report(self):
+        plan = json.loads((ROOT / "evidence/g3/2026-11-19-readiness-plan.json").read_text())
+        recorded = json.loads((ROOT / "evidence/g3/2026-11-19-readiness-report.json").read_text())
+        report = self.gate.assess(plan, as_of=recorded["assessed_at"])
+        self.assertEqual(report, recorded)
+        self.assertEqual(report["status"], "blocked")
+        self.assertFalse(report["g3_gate_passed"])
+        self.assertEqual(plan["controls"]["central_logging"]["status"], "planned")
 
     def test_secret_management_not_applicable_is_rejected_for_a_real_pilot(self):
         plan = self.demonstrated_plan()

@@ -17,6 +17,19 @@ progress, not independent certification or production assurance.
 | D5 | Portfolio priority models may diverge and policy is hard-coded | Open design debt | No false claim of resolution; consolidate into a versioned policy service before production pilot decisions | Future policy-equivalence, versioning, approval, rollback, and migration tests |
 | D6 | Standards roadmap needs an active governance process | Open governance item | Standards references remain informational; assign owner and review cadence before external pilot | Approved standards register, dated review evidence, and change-control record |
 
+## 2a. Review of G3 closure claims (19 November 2026)
+
+Review of commit `64c9cba` ("Complete G3 readiness and start G4 preparation").
+Correction record: `evidence/g3/2026-11-19-review-corrections.json`.
+
+| ID | Finding | Disposition | Implemented evidence | Verification evidence |
+|---|---|---|---|---|
+| R1 | G3-C06 marked demonstrated although its evidence records `tamper_resistance_demonstrated: false` | Corrected; control open | Status set to `planned` in the recorded plan; docs corrected | `test_recorded_g3_plan_matches_committed_report` |
+| R2 | G3-C05 not-applicable decision approved by the requester; requirement widened in the same commit | Code fixed; control open | Assessor requires `approved_by` different from `requested_by` for not-applicable | `test_not_applicable_requires_an_independent_approver` |
+| R3 | "synthetic-staging-ready" asserted by hand; assessor never run on live evidence | Remediated | `evidence/g3/2026-11-19-readiness-plan.json` and assessor report: `blocked`, 6 of 8 | `test_recorded_g3_plan_matches_committed_report` |
+| R4 | Bootstrap stack updated while the workload stack exists, against the README rule; operator gained `lambda:InvokeFunction`; no change-set record | Rule amended; exception recorded; change-set ID outstanding | `infra/aws/g3-synthetic/README.md` recorded exception | Open until the change-set ID is attached |
+| R5 | G3-C03 accepted with security-group egress to `0.0.0.0/0` | Template fixed (PR #4 merged); live stack not yet updated | S3 prefix-list egress in `template.json` | `test_security_group_has_no_ingress_and_s3_only_https_egress`; `test_no_rule_reaches_any_ip_range` |
+
 ## 3. Acceptance boundary
 
 The remediated findings are supported by local code and automated tests. They

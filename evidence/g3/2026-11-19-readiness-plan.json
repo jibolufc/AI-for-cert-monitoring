@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "6f1c9a52-3b7e-5d14-8a2f-9e0c4b7d1a63",
+  "environment": "synthetic-staging",
+  "requested_by": "project-owner",
+  "approved_by": "project-owner",
+  "source_id": "ccp-g3-synthetic-stack",
+  "collection_mode": "read-only",
+  "asset_ids": [
+    "ccp-g3-synthetic"
+  ],
+  "valid_from": "2026-11-19T00:00:00Z",
+  "expires_at": "2026-12-31T23:59:59Z",
+  "authenticated_source": false,
+  "evidence_level": "simulated",
+  "data_classification": "synthetic",
+  "retention_days": 30,
+  "privacy_review": "not-required-synthetic",
+  "security_review": "approved",
+  "real_data_enabled": false,
+  "authorisation_reference": null,
+  "stop_conditions": [
+    {
+      "trigger": "Any non-synthetic record, credential, hostname, or address is observed.",
+      "action": "Stop intake, disable the synthetic invocation window, and preserve minimal evidence.",
+      "owner": "project-owner"
+    },
+    {
+      "trigger": "Any attempted mutation, unapproved egress, or change set that differs from the reviewed one.",
+      "action": "Stop, roll back with the reviewed close-window change set, and record the event.",
+      "owner": "project-owner"
+    }
+  ],
+  "prohibited_operations": [
+    "issue",
+    "revoke",
+    "rotate",
+    "delete",
+    "deploy",
+    "change-trust",
+    "execute"
+  ],
+  "controls": {
+    "workload_identity": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-closure-readonly-observations.json#/observations/workload_identity"
+      ]
+    },
+    "least_privilege_rbac": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-closure-readonly-observations.json#/observations/least_privilege_rbac"
+      ]
+    },
+    "private_networking": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-closure-readonly-observations.json#/observations/private_networking"
+      ]
+    },
+    "encryption": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-closure-readonly-observations.json#/observations/encryption"
+      ]
+    },
+    "secret_management": {
+      "status": "not-applicable",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-c05-not-applicable-decision.json"
+      ]
+    },
+    "central_logging": {
+      "status": "planned",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-closure-readonly-observations.json#/observations/central_logging"
+      ]
+    },
+    "deployment_controls": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-controlled-synthetic-test.json"
+      ]
+    },
+    "backup_restore": {
+      "status": "demonstrated",
+      "evidence_refs": [
+        "evidence/g3/2026-11-19-controlled-synthetic-test.json"
+      ]
+    }
+  }
+}

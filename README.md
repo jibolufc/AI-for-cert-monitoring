@@ -9,15 +9,20 @@ system.
 
 ## Current gate status
 
-The G3 synthetic-staging control set is complete: seven controls are
-demonstrated and secret management is accepted as not applicable to the current
-secretless synthetic workload. This means `synthetic-staging-ready`, not a G3
-production pass; real-data and execution authority remain disabled.
+The recorded G3 synthetic-staging assessment is **`blocked`, 6 of 8 controls
+demonstrated** ([plan](evidence/g3/2026-11-19-readiness-plan.json),
+[report](evidence/g3/2026-11-19-readiness-report.json)). G3-C01 to C04, C07 and
+C08 are demonstrated. G3-C06 central logging is open because the evidence
+records `tamper_resistance_demonstrated: false`. G3-C05 secret management has a
+not-applicable decision but no approver independent of the requester. The plan
+itself also lacks an independent approver. Real-data and execution authority
+remain disabled. See the handoff in [`AGENTS.md`](AGENTS.md) and review R1 to R5
+in [`docs/project/09-external-review-findings-register.md`](docs/project/09-external-review-findings-register.md).
 
-The active next milestone is **G4 production preparation**. Its ten governance,
-security, resilience and operational controls begin as unevidenced, so G4
-remains blocked while preparation proceeds. G4 work cannot authorise a public
-service, production data or cryptographic migration execution.
+G4 production preparation has started on the same branch (10 controls, 0
+demonstrated). Close G3-C05 and G3-C06 before treating G4 as the active
+milestone. G4 work cannot authorise a public service, production data or
+cryptographic migration execution.
 
 Milestones 1 through 6 and the safe reference foundations for Milestones 7
 through 9 are executable end to end:
@@ -134,6 +139,8 @@ python3 -m venv .venv
   --output-dir build/reference-release
 
 # Assess G3 synthetic-staging readiness without granting collection authority.
+# The recorded live position is evidence/g3/2026-11-19-readiness-plan.json;
+# the example below is a fictional fixture.
 .venv/bin/python -m crypto_control_plane.g3_readiness_cli \
   --plan examples/g3/synthetic-readiness-plan.json \
   --output build/g3/readiness-report.json \

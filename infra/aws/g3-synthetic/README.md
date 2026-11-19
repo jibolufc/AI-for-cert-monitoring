@@ -87,8 +87,21 @@ operator must enrol MFA, sign out, sign back in with MFA, upload the reviewed
 template only under `templates/`, and use the exact service-role and permissions-
 boundary ARNs returned by the bootstrap outputs.
 
-The bootstrap stack is a security dependency. Do not delete or update it while
-the G3 workload stack exists. Its retained staging bucket and TLS-only policy
+The bootstrap stack is a security dependency. Do not delete it while the G3
+workload stack exists. Update it only through a reviewed change set executed by
+the account administrator, recorded as an exception with the change-set ID, the
+statements added or removed, and the reason, under `evidence/g3/`.
+
+**Recorded exception, 19 November 2026 (review R4).** Commit `64c9cba` added
+MFA-gated, exact-resource read permissions for evidence collection
+(`ReadExactSyntheticWorkloadRole`, `ReadExactSyntheticLogGroup`,
+`ReadSyntheticEvidenceBucketConfiguration`, `ReadSyntheticEvidenceObjectsOnly`,
+`ListSyntheticEvidencePrefixOnly`, EC2 network describes) and
+`ReadAndInvokeExactSyntheticRunner`, which gives the human operator
+`lambda:InvokeFunction` on the synthetic function only. The closure evidence
+shows these permissions in use, so the update was applied, but no change-set ID
+or approval record was kept. Attach the change-set ID and execution time to
+`evidence/g3/2026-11-19-review-corrections.json` before G3 closure. Its retained staging bucket and TLS-only policy
 require a separate, approved teardown decision.
 
 ## Console deployment

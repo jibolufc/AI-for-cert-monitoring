@@ -52,7 +52,13 @@ class G3ReadinessGate:
                 and control["status"] == "not-applicable"
                 and control["evidence_refs"]
             ):
-                not_applicable += 1
+                approver = control.get("approved_by")
+                if approver and approver != plan["requested_by"]:
+                    not_applicable += 1
+                else:
+                    unmet.append(
+                        f"not-applicable disposition needs an approver independent of the requester: {control_name}"
+                    )
             else:
                 unmet.append(f"control is not evidenced as demonstrated or accepted not applicable: {control_name}")
 

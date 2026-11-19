@@ -51,14 +51,20 @@ The readiness assessor may treat `secret_management` as satisfied by a
 - the control is `secret_management`;
 - the control status is `not-applicable`; and
 - `evidence_refs` contains this decision record or another accountable decision
-  reference.
+  reference; and
+- the control names an `approved_by` identity that differs from the plan's
+  `requested_by` (added 19 November 2026, review R2).
+
+**Current state:** this decision was given by the project owner, who is also the
+requester, so it does not yet satisfy the last condition. G3-C05 stays open
+until a second person approves it or a synthetic-secret test is run.
 
 No other G3 control may use this exception. An authorised real-data pilot cannot
 use this synthetic-scope disposition.
 
-With seven controls demonstrated and this one control accepted as not
-applicable, the automated assessment may report `synthetic-staging-ready` with
-zero remaining controls. It must still report:
+Once the other seven controls are demonstrated and this disposition is
+independently approved, the automated assessment may report
+`synthetic-staging-ready` with zero remaining controls. It must still report:
 
 - `g3_gate_passed: false`;
 - `collection_execution_authority: none`; and

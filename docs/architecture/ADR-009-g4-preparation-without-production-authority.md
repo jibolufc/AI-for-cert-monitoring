@@ -5,9 +5,10 @@
 
 ## Context
 
-The G3 synthetic-staging control set now has seven demonstrated controls and one
-documented not-applicable disposition for the secretless workload. This closes
-the synthetic control set but does not pass G3, authorise a real source or
+The G3 synthetic-staging control set has six demonstrated controls. G3-C06
+central logging is open (no tamper-resistance evidence) and the G3-C05
+not-applicable disposition awaits an independent approver (correction of 19
+November 2026). G4 preparation does not pass G3, authorise a real source or
 replace an external accountable decision. Production planning can proceed
 without weakening those boundaries if preparation evidence is kept separate
 from operating authority.

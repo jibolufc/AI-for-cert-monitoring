@@ -2,10 +2,11 @@
 
 ## Current decision
 
-Gate G4 production preparation is the active next milestone. The G3
-synthetic-staging control set has zero remaining controls, with seven
-demonstrated and G3-C05 accepted as not applicable to the current secretless
-scope. This does not constitute a G3 production pass. G4 preparation continues
+G4 production preparation has started, but it is not yet the active milestone.
+The recorded G3 synthetic-staging assessment is `blocked` with six of eight
+controls demonstrated: G3-C06 central logging lacks tamper resistance and the
+G3-C05 not-applicable decision lacks an independent approver (review R1 to R5,
+19 November 2026). Close those first. G4 preparation continues
 using synthetic data and non-public infrastructure only and does not authorise a
 production service, public endpoint, production traffic, real-data intake, or
 cryptographic migration execution.
