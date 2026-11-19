@@ -41,19 +41,38 @@ class G3AwsTemplateTests(unittest.TestCase):
             "Gateway",
         )
 
-    def test_security_group_has_no_ingress_and_https_only_egress(self):
+    def test_security_group_has_no_ingress_and_s3_only_https_egress(self):
         properties = self.resources["SyntheticWorkloadSecurityGroup"]["Properties"]
         self.assertNotIn("SecurityGroupIngress", properties)
         self.assertEqual(
             properties["SecurityGroupEgress"],
             [{
-                "Description": "HTTPS only; no NAT is created by this stack",
+                "Description": "HTTPS to the regional S3 prefix list only",
                 "IpProtocol": "tcp",
                 "FromPort": 443,
                 "ToPort": 443,
-                "CidrIp": "0.0.0.0/0",
+                "DestinationPrefixListId": {"Ref": "S3PrefixListId"},
             }],
         )
+
+    def test_no_rule_reaches_any_ip_range(self):
+        # A NAT gateway on the private route tables must not turn into internet
+        # egress: no IPv4 or IPv6 CIDR destination is allowed in any rule.
+        for rule in self.resources["SyntheticWorkloadSecurityGroup"]["Properties"]["SecurityGroupEgress"]:
+            self.assertNotIn("CidrIp", rule)
+            self.assertNotIn("CidrIpv6", rule)
+        self.assertNotIn("0.0.0.0/0", json.dumps(self.template))
+        self.assertNotIn("::/0", json.dumps(self.template))
+
+    def test_s3_prefix_list_parameter_is_required_and_constrained(self):
+        parameter = self.template["Parameters"]["S3PrefixListId"]
+        self.assertEqual(parameter["Type"], "String")
+        self.assertNotIn("Default", parameter)
+        self.assertEqual(parameter["AllowedPattern"], "^pl-[0-9a-f]{8,17}$")
+        example = json.loads(
+            (ROOT / "infra" / "aws" / "g3-synthetic" / "parameters.example.json").read_text()
+        )
+        self.assertIn("S3PrefixListId", {item["ParameterKey"] for item in example})
 
     def test_evidence_bucket_is_private_encrypted_versioned_and_bounded(self):
         bucket = self.resources["SyntheticEvidenceBucket"]["Properties"]

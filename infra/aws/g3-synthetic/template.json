@@ -6,7 +6,7 @@
       "ParameterGroups": [
         {
           "Label": {"default": "Verified existing network"},
-          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint", "WorkloadPermissionsBoundaryArn"]
+          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint", "S3PrefixListId", "WorkloadPermissionsBoundaryArn"]
         },
         {
           "Label": {"default": "Approved synthetic test window"},
@@ -18,6 +18,7 @@
         "PrivateSubnetIds": {"default": "Two verified private subnets"},
         "PrivateRouteTableIds": {"default": "Route tables associated with the private subnets"},
         "CreateS3GatewayEndpoint": {"default": "Create an S3 gateway endpoint only if one is not already associated"},
+        "S3PrefixListId": {"default": "AWS-managed S3 prefix list for the target region (com.amazonaws.<region>.s3)"},
         "WorkloadPermissionsBoundaryArn": {"default": "Approved permissions boundary for the synthetic Lambda role"},
         "SyntheticInvocationEnabled": {"default": "Temporarily enable one concurrent synthetic invocation"}
       }
@@ -43,6 +44,12 @@
       "Default": "false",
       "AllowedValues": ["true", "false"],
       "Description": "Set to true only after confirming the private route tables do not already have an S3 gateway endpoint route."
+    },
+    "S3PrefixListId": {
+      "Type": "String",
+      "AllowedPattern": "^pl-[0-9a-f]{8,17}$",
+      "ConstraintDescription": "Must be the AWS-managed S3 prefix list ID (pl-...) for the target region.",
+      "Description": "ID of the AWS-managed prefix list com.amazonaws.<region>.s3. Security-group egress is limited to it, so the workload can reach S3 and nothing else even if a NAT gateway is on the private route tables."
     },
     "WorkloadPermissionsBoundaryArn": {
       "Type": "String",
@@ -139,15 +146,15 @@
     "SyntheticWorkloadSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
-        "GroupDescription": "No-ingress G3 synthetic workload; HTTPS egress is constrained by private routing and the S3 gateway endpoint",
+        "GroupDescription": "No-ingress G3 synthetic workload; HTTPS egress to the regional S3 prefix list only",
         "VpcId": {"Ref": "ExistingVpcId"},
         "SecurityGroupEgress": [
           {
-            "Description": "HTTPS only; no NAT is created by this stack",
+            "Description": "HTTPS to the regional S3 prefix list only",
             "IpProtocol": "tcp",
             "FromPort": 443,
             "ToPort": 443,
-            "CidrIp": "0.0.0.0/0"
+            "DestinationPrefixListId": {"Ref": "S3PrefixListId"}
           }
         ],
         "Tags": [
