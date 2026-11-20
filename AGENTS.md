@@ -25,6 +25,41 @@ Update the "Last handoff" section when you stop.
 - Run the full suite on Python 3.11 and 3.13 before committing:
   `python -m unittest discover -s tests`.
 
+## Feature track: CycloneDX interoperability (branch `feature/cyclonedx-interop`)
+
+Runs in parallel with G3 closure because it needs no AWS access and no real
+data. It does not change any G3 or G4 status. Decision record:
+`docs/architecture/ADR-010-scanner-neutral-cyclonedx-interoperability.md`.
+
+| # | Item | State |
+|---|---|---|
+| 1 | ADR-010 scanner-neutral boundary | Proposed, awaiting owner acceptance |
+| 2 | CycloneDX 1.7 schema validation and import fixtures | Next |
+| 3 | 1.6 and 1.5 compatibility tests (pqaudit emits 1.5) | Not started |
+| 4 | Canonical mapping and provenance preservation | Not started |
+| 5 | CycloneDX 1.6 export plus `ccp-assurance-1.0` sidecar | Not started |
+| 6 | CBOMkit and pqaudit comparison harness, fixtures only | Not started |
+| 7 | Hash-backed gap report | Not started |
+| 8 | Website and deck wording | Only after 2 to 7 have runtime evidence |
+
+Rules specific to this track, from ADR-010:
+
+- Vendor the official CycloneDX JSON schemas with SHA-256; reject documents
+  that fail validation rather than partially importing them.
+- Imported evidence level comes from the import manifest, capped at
+  `public-observation` (or `sanitised-capture` with a sanitisation record).
+- Never use a scanner's quantum-safety verdict as the classification; recompute
+  from the algorithm family.
+- Never run third-party scanners in CI or against hosts other than the
+  kex-probe loopback lab. Commit their outputs as hashed fixtures.
+
+## Handoff: 20 November 2026, 14:30 UTC (Claude)
+
+Started the CycloneDX track on `feature/cyclonedx-interop` (from
+`codex/g3-readiness` at `fb2c598`): ADR-010 and this section. No code changes.
+G3 position unchanged: `blocked`, 6 of 8. Codex's G3 open list below still
+applies.
+
 ## Last handoff: 20 November 2026, 13:55 UTC (Codex)
 
 Branch `codex/g3-readiness`. Main has PR #2 (kex-probe), #3 (D1/D4), #4 (S3-only
