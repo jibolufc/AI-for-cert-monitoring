@@ -1,0 +1,24 @@
+{
+  "assessed_at": "2026-11-20T13:49:14Z",
+  "collection_execution_authority": "none",
+  "control_summary": {
+    "demonstrated": 6,
+    "not_applicable": 0,
+    "remaining": 2,
+    "required": 8
+  },
+  "g3_gate_passed": false,
+  "limitations": [
+    "This assessment validates declared evidence references; it does not independently verify the referenced artifacts.",
+    "Synthetic staging evidence cannot establish enterprise discovery coverage or production readiness.",
+    "A real-data pilot requires a recorded accountable G3 decision outside this tool."
+  ],
+  "plan_id": "6f1c9a52-3b7e-5d14-8a2f-9e0c4b7d1a63",
+  "schema_version": "1.0",
+  "status": "blocked",
+  "unmet_requirements": [
+    "control is not evidenced as demonstrated or accepted not applicable: central_logging",
+    "independent approval is required; requester and approver must differ",
+    "not-applicable disposition needs an approver independent of the requester: secret_management"
+  ]
+}

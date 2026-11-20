@@ -3,5 +3,6 @@
   {"ParameterKey": "PrivateSubnetIds", "ParameterValue": "subnet-PRIVATE-A,subnet-PRIVATE-B"},
   {"ParameterKey": "PrivateRouteTableIds", "ParameterValue": "rtb-PRIVATE-A,rtb-PRIVATE-B"},
   {"ParameterKey": "CreateS3GatewayEndpoint", "ParameterValue": "false"},
-  {"ParameterKey": "S3PrefixListId", "ParameterValue": "pl-REPLACE"}
+  {"ParameterKey": "S3PrefixListId", "ParameterValue": "pl-REPLACE"},
+  {"ParameterKey": "EvidenceBucketName", "ParameterValue": ""}
 ]

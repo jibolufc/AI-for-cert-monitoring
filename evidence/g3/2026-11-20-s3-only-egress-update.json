@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "G3-C03-S3-ONLY-EGRESS-20261120-001",
+  "recorded_at": "2026-11-20T13:49:14Z",
+  "environment": "synthetic-staging",
+  "region": "us-east-1",
+  "data_classification": "synthetic",
+  "real_data_enabled": false,
+  "collection_execution_authority": "none",
+  "production_operating_authority": "none",
+  "control": "G3-C03",
+  "purpose": "Records the reviewed in-place restriction of the synthetic workload security group's HTTPS egress to the AWS-managed regional S3 prefix list.",
+  "review_history": [
+    {
+      "change_set_name": "g3-reviewed-s3-only-egress-20261120",
+      "change_set_id": "c6cc0e9e-06ee-421d-812d-b063fc955c5c",
+      "decision": "rejected-and-deleted",
+      "reason": "Preview proposed five resource modifications and three replacements."
+    },
+    {
+      "change_set_name": "g3-reviewed-s3-only-egress-v2-20261120",
+      "change_set_id": "a6073ddf-0e72-42bb-9bdf-da6f0cf80484",
+      "decision": "rejected-and-deleted",
+      "reason": "Preview still proposed replacement of SyntheticEvidenceBucketPolicy."
+    },
+    {
+      "change_set_name": "g3-reviewed-s3-only-egress-v3-20261120",
+      "change_set_id": "a362ba14-dc18-4319-9acc-f22c55fe7633",
+      "decision": "approved-and-executed",
+      "approval_source": "explicit project-owner approval in the controlled project session",
+      "reviewed_resource_changes": [
+        {
+          "logical_id": "SyntheticWorkloadSecurityGroup",
+          "action": "Modify",
+          "replacement": false
+        }
+      ],
+      "unexpected_resource_changes": 0
+    }
+  ],
+  "reviewed_template": {
+    "source": "infra/aws/g3-synthetic/template.json",
+    "staged_object": "templates/CCP-G3-S3-ONLY-EGRESS-V3-CLOUDFORMATION.json",
+    "sha256": "bf21677788272f7614433fa21e7df4ed0208ca800208c2a5972ebf10b898f1e4",
+    "focused_test_result": "14 tests passed",
+    "intended_egress": {
+      "protocol": "tcp",
+      "from_port": 443,
+      "to_port": 443,
+      "destination_prefix_list_id": "pl-63a5400a",
+      "cidr_destinations": []
+    }
+  },
+  "execution": {
+    "stack": "ccp-g3-synthetic",
+    "stack_update_started_at": "2026-11-20T13:26:47Z",
+    "security_group_update_completed_at": "2026-11-20T13:26:52Z",
+    "stack_update_completed_at": "2026-11-20T13:26:55Z",
+    "final_stack_status": "UPDATE_COMPLETE",
+    "failure_or_rollback_observed": false
+  },
+  "post_update_observation": {
+    "security_group_id": "sg-01be2d252e722d13e",
+    "inbound_rule_count": 0,
+    "outbound_rule_count": 1,
+    "exact_rule_expansion_visible_to_operator": false,
+    "denied_read_action": "ec2:DescribeSecurityGroupRules",
+    "corroboration": [
+      "The accepted change set contained exactly one non-replacing SyntheticWorkloadSecurityGroup modification.",
+      "The change-set property diff removed 0.0.0.0/0 and added pl-63a5400a for TCP 443.",
+      "CloudFormation reported UPDATE_COMPLETE for the security group and stack.",
+      "The bounded operator subsequently observed zero inbound rules and one outbound rule."
+    ]
+  },
+  "review_correction": {
+    "supersedes_record_for_r5": "evidence/g3/2026-11-19-review-corrections.json#/corrections/4",
+    "live_stack_egress_updated": true,
+    "r5_status": "closed"
+  },
+  "assessment": "demonstrated",
+  "limitations": [
+    "This is console-observed evidence and not a CloudTrail export or independently signed attestation.",
+    "The bounded operator could observe the live rule counts but remained denied exact security-group-rule expansion.",
+    "The exact protocol, port and destination claim is corroborated by the reviewed change-set diff, template hash and successful CloudFormation update rather than a separate post-update DescribeSecurityGroupRules response.",
+    "This change grants no real-data collection, production operation or cryptographic execution authority."
+  ]
+}

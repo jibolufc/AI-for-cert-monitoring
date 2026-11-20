@@ -129,7 +129,11 @@ require a separate, approved teardown decision.
 Stacks created before this change allow HTTPS egress to `0.0.0.0/0`. To apply
 the restriction, create a change set named `g3-reviewed-*` on
 `ccp-g3-synthetic` with the updated template and the new `S3PrefixListId`
-parameter, keeping every other parameter's previous value. The change set
+parameter. Set `EvidenceBucketName` to the current physical ID of
+`SyntheticEvidenceBucket` when the live stack template already contains an
+explicit bucket name; this preserves retained evidence and prevents a bucket
+replacement. Keep every other parameter's previous value. Leave
+`EvidenceBucketName` blank only when creating a new stack. The change set
 should show only `SyntheticWorkloadSecurityGroup` as Modify with Replacement
 `False`. Reject it if it shows any other resource change or any replacement.
 Record the change set and the security group's egress rules afterwards as

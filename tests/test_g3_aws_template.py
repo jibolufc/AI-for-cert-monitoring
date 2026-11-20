@@ -47,7 +47,7 @@ class G3AwsTemplateTests(unittest.TestCase):
         self.assertEqual(
             properties["SecurityGroupEgress"],
             [{
-                "Description": "HTTPS to the regional S3 prefix list only",
+                "Description": "HTTPS only; no NAT is created by this stack",
                 "IpProtocol": "tcp",
                 "FromPort": 443,
                 "ToPort": 443,
@@ -73,6 +73,50 @@ class G3AwsTemplateTests(unittest.TestCase):
             (ROOT / "infra" / "aws" / "g3-synthetic" / "parameters.example.json").read_text()
         )
         self.assertIn("S3PrefixListId", {item["ParameterKey"] for item in example})
+
+    def test_existing_evidence_bucket_name_can_be_preserved_on_update(self):
+        parameter = self.template["Parameters"]["EvidenceBucketName"]
+        self.assertEqual(parameter["Default"], "")
+        self.assertEqual(
+            self.template["Conditions"]["HasExplicitEvidenceBucketName"],
+            {"Fn::Not": [{"Fn::Equals": [{"Ref": "EvidenceBucketName"}, ""]}]},
+        )
+        self.assertEqual(
+            self.resources["SyntheticEvidenceBucket"]["Properties"]["BucketName"],
+            {
+                "Fn::If": [
+                    "HasExplicitEvidenceBucketName",
+                    {"Ref": "EvidenceBucketName"},
+                    {"Ref": "AWS::NoValue"},
+                ]
+            },
+        )
+        policy = self.resources["SyntheticEvidenceBucketPolicy"]["Properties"]
+        self.assertEqual(
+            policy["Bucket"],
+            {
+                "Fn::If": [
+                    "HasExplicitEvidenceBucketName",
+                    {"Ref": "EvidenceBucketName"},
+                    {"Ref": "SyntheticEvidenceBucket"},
+                ]
+            },
+        )
+        resources = policy["PolicyDocument"]["Statement"][0]["Resource"]
+        self.assertEqual(
+            resources[0]["Fn::If"][1],
+            {"Fn::Sub": "arn:${AWS::Partition}:s3:::${EvidenceBucketName}"},
+        )
+        self.assertEqual(
+            resources[1]["Fn::If"][1],
+            {"Fn::Sub": "arn:${AWS::Partition}:s3:::${EvidenceBucketName}/*"},
+        )
+
+    def test_security_group_description_stays_stable_for_in_place_egress_update(self):
+        self.assertEqual(
+            self.resources["SyntheticWorkloadSecurityGroup"]["Properties"]["GroupDescription"],
+            "No-ingress G3 synthetic workload; HTTPS egress is constrained by private routing and the S3 gateway endpoint",
+        )
 
     def test_evidence_bucket_is_private_encrypted_versioned_and_bounded(self):
         bucket = self.resources["SyntheticEvidenceBucket"]["Properties"]

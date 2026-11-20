@@ -6,7 +6,7 @@
       "ParameterGroups": [
         {
           "Label": {"default": "Verified existing network"},
-          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint", "S3PrefixListId", "WorkloadPermissionsBoundaryArn"]
+          "Parameters": ["ExistingVpcId", "PrivateSubnetIds", "PrivateRouteTableIds", "CreateS3GatewayEndpoint", "S3PrefixListId", "EvidenceBucketName", "WorkloadPermissionsBoundaryArn"]
         },
         {
           "Label": {"default": "Approved synthetic test window"},
@@ -19,6 +19,7 @@
         "PrivateRouteTableIds": {"default": "Route tables associated with the private subnets"},
         "CreateS3GatewayEndpoint": {"default": "Create an S3 gateway endpoint only if one is not already associated"},
         "S3PrefixListId": {"default": "AWS-managed S3 prefix list for the target region (com.amazonaws.<region>.s3)"},
+        "EvidenceBucketName": {"default": "Existing evidence bucket physical name (updates only)"},
         "WorkloadPermissionsBoundaryArn": {"default": "Approved permissions boundary for the synthetic Lambda role"},
         "SyntheticInvocationEnabled": {"default": "Temporarily enable one concurrent synthetic invocation"}
       }
@@ -51,6 +52,13 @@
       "ConstraintDescription": "Must be the AWS-managed S3 prefix list ID (pl-...) for the target region.",
       "Description": "ID of the AWS-managed prefix list com.amazonaws.<region>.s3. Security-group egress is limited to it, so the workload can reach S3 and nothing else even if a NAT gateway is on the private route tables."
     },
+    "EvidenceBucketName": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "^$|^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$",
+      "ConstraintDescription": "Leave blank for a new stack, or supply the exact existing evidence bucket physical name when updating a stack whose live template names the bucket explicitly.",
+      "Description": "Update compatibility guard. For an existing stack, use its current SyntheticEvidenceBucket physical ID so CloudFormation does not replace retained evidence. Leave blank only when creating a new stack."
+    },
     "WorkloadPermissionsBoundaryArn": {
       "Type": "String",
       "AllowedPattern": "^arn:(aws|aws-us-gov|aws-cn):iam::[0-9]{12}:policy/ccp-g3-workload-boundary$",
@@ -66,6 +74,7 @@
   },
   "Conditions": {
     "ShouldCreateS3GatewayEndpoint": {"Fn::Equals": [{"Ref": "CreateS3GatewayEndpoint"}, "true"]},
+    "HasExplicitEvidenceBucketName": {"Fn::Not": [{"Fn::Equals": [{"Ref": "EvidenceBucketName"}, ""]}]},
     "ShouldEnableSyntheticInvocation": {"Fn::Equals": [{"Ref": "SyntheticInvocationEnabled"}, "true"]}
   },
   "Resources": {
@@ -74,6 +83,7 @@
       "DeletionPolicy": "Retain",
       "UpdateReplacePolicy": "Retain",
       "Properties": {
+        "BucketName": {"Fn::If": ["HasExplicitEvidenceBucketName", {"Ref": "EvidenceBucketName"}, {"Ref": "AWS::NoValue"}]},
         "BucketEncryption": {
           "ServerSideEncryptionConfiguration": [
             {"ServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
@@ -112,7 +122,7 @@
       "DeletionPolicy": "Retain",
       "UpdateReplacePolicy": "Retain",
       "Properties": {
-        "Bucket": {"Ref": "SyntheticEvidenceBucket"},
+        "Bucket": {"Fn::If": ["HasExplicitEvidenceBucketName", {"Ref": "EvidenceBucketName"}, {"Ref": "SyntheticEvidenceBucket"}]},
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -122,8 +132,8 @@
               "Principal": "*",
               "Action": "s3:*",
               "Resource": [
-                {"Fn::GetAtt": ["SyntheticEvidenceBucket", "Arn"]},
-                {"Fn::Sub": "${SyntheticEvidenceBucket.Arn}/*"}
+                {"Fn::If": ["HasExplicitEvidenceBucketName", {"Fn::Sub": "arn:${AWS::Partition}:s3:::${EvidenceBucketName}"}, {"Fn::GetAtt": ["SyntheticEvidenceBucket", "Arn"]}]},
+                {"Fn::If": ["HasExplicitEvidenceBucketName", {"Fn::Sub": "arn:${AWS::Partition}:s3:::${EvidenceBucketName}/*"}, {"Fn::Sub": "${SyntheticEvidenceBucket.Arn}/*"}]}
               ],
               "Condition": {"Bool": {"aws:SecureTransport": "false"}}
             }
@@ -146,11 +156,11 @@
     "SyntheticWorkloadSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
-        "GroupDescription": "No-ingress G3 synthetic workload; HTTPS egress to the regional S3 prefix list only",
+        "GroupDescription": "No-ingress G3 synthetic workload; HTTPS egress is constrained by private routing and the S3 gateway endpoint",
         "VpcId": {"Ref": "ExistingVpcId"},
         "SecurityGroupEgress": [
           {
-            "Description": "HTTPS to the regional S3 prefix list only",
+            "Description": "HTTPS only; no NAT is created by this stack",
             "IpProtocol": "tcp",
             "FromPort": 443,
             "ToPort": 443,

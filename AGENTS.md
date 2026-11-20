@@ -25,43 +25,51 @@ Update the "Last handoff" section when you stop.
 - Run the full suite on Python 3.11 and 3.13 before committing:
   `python -m unittest discover -s tests`.
 
-## Last handoff: 19 November 2026, 17:00 UTC (Claude)
+## Last handoff: 20 November 2026, 13:55 UTC (Codex)
 
 Branch `codex/g3-readiness`. Main has PR #2 (kex-probe), #3 (D1/D4), #4 (S3-only
 egress) and #5 merged; this branch has main merged in.
 
 **Done in this handoff**
 
-1. Committed Codex's uncommitted G4 foundation drafts (G4-C01, C02, C09, C10)
-   as `f46855d`. All four remain `planned`; G4 is `blocked`, 0 of 10.
-2. Merged PR #4 into main and main into this branch. The template's security
-   group now allows HTTPS only to the S3 prefix list (`S3PrefixListId`). The
-   live stack still has the old `0.0.0.0/0` rule.
-3. Reviewed `64c9cba` and corrected the G3 position. Findings R1 to R5 are in
-   `docs/project/09-external-review-findings-register.md` section 2a and
-   `evidence/g3/2026-11-19-review-corrections.json`.
-4. G3 assessor now requires an independent `approved_by` for not-applicable
-   controls.
-5. Recorded G3 plan and report added. Result: **`blocked`, 6 of 8
-   demonstrated** (C01, C02, C03, C04, C07, C08).
+1. Rejected and deleted two unsafe S3-only egress previews. V1 proposed five
+   changes and three replacements. V2 still proposed replacement of
+   `SyntheticEvidenceBucketPolicy`.
+2. Updated the workload template to preserve the live evidence-bucket name,
+   bucket-policy target and immutable security-group description during an
+   existing-stack update. Added regression coverage and update instructions.
+3. Executed `g3-reviewed-s3-only-egress-v3-20261120` only after it showed one
+   resource change: `SyntheticWorkloadSecurityGroup`, Modify, Replacement
+   `False`. Change-set ID suffix:
+   `a362ba14-dc18-4319-9acc-f22c55fe7633`.
+4. CloudFormation reported `UPDATE_COMPLETE` at `2026-11-20T13:26:55Z` with no
+   failure or rollback. The bounded operator then observed zero inbound and one
+   outbound security-group rule; exact expansion remains denied by
+   `ec2:DescribeSecurityGroupRules` and no permission was broadened.
+5. Added and hashed
+   `evidence/g3/2026-11-20-s3-only-egress-update.json`, closing review R5 while
+   retaining the read-permission limitation explicitly.
+6. Reran the assessor into the new hashed
+   `evidence/g3/2026-11-20-readiness-report.json`. Authoritative result remains
+   **`blocked`, 6 demonstrated, 0 accepted not applicable, 2 remaining**.
+7. Fixed the `test_kex_probe` stand-in launcher so Python interpreter paths
+   containing spaces are shell-quoted without changing production probe code.
+   The full suite now passes on temporary Python 3.11.18 and installed Python
+   3.13: 165 tests, zero failures and one expected loopback sandbox skip on each.
 
 **Open, in order**
 
-1. Apply the S3-only egress template to `ccp-g3-synthetic` with a
-   `g3-reviewed-*` change set. It must show only
-   `SyntheticWorkloadSecurityGroup` as Modify, Replacement `False`. Record the
-   change-set ID and the new egress rule (closes R5).
-2. Attach the bootstrap change-set ID from 19 November to the corrections record
-   (closes R4).
-3. G3-C06: add tamper resistance (deny log deletion and retention changes to all
+1. Attach the bootstrap change-set ID from 19 November to a new corrections
+   supplement (do not edit the hashed 19 November record) to close R4.
+2. G3-C06: add tamper resistance (deny log deletion and retention changes to all
    but a break-glass role, then record one denied call; or export to S3 with
    Object Lock). Then set `central_logging` to `demonstrated` in a new dated plan.
-4. G3-C05: either a second person approves the not-applicable decision (set
+3. G3-C05: either a second person approves the not-applicable decision (set
    `approved_by` in a new dated plan) or run a synthetic Secrets Manager test.
-5. Plan approval: the recorded plan has `requested_by` = `approved_by`. An
+4. Plan approval: the recorded plan has `requested_by` = `approved_by`. An
    independent approver is required before `synthetic-staging-ready`.
-6. Generate `dashboard/dist/data.json` from the assessor report and stack
+5. Generate `dashboard/dist/data.json` from the assessor report and stack
    outputs; it still shows 12 November figures.
-7. Only after G3 reports `synthetic-staging-ready`: continue G4.
+6. Only after G3 reports `synthetic-staging-ready`: continue G4.
 
 Untracked `public-site-release/` in the Codex worktree is unrelated; leave it.

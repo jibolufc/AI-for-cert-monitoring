@@ -10,6 +10,7 @@ import base64
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import shlex
 import sys
 import tempfile
 import unittest
@@ -34,14 +35,19 @@ class FakeProbe:
 
     def __init__(self, directory: Path, stdout: str, exit_code: int = 0, stderr: str = ""):
         self.argv_file = directory / "argv.json"
-        script = directory / "kex-probe"
-        script.write_text(
-            f"#!{sys.executable}\n"
+        python_script = directory / "kex_probe_fake.py"
+        python_script.write_text(
             "import json, sys\n"
             f"open({str(self.argv_file)!r}, 'w').write(json.dumps(sys.argv[1:]))\n"
             f"sys.stdout.write({stdout!r})\n"
             f"sys.stderr.write({stderr!r})\n"
             f"sys.exit({exit_code})\n",
+            encoding="utf-8",
+        )
+        script = directory / "kex-probe"
+        script.write_text(
+            "#!/bin/sh\n"
+            f"exec {shlex.quote(sys.executable)} {shlex.quote(str(python_script))} \"$@\"\n",
             encoding="utf-8",
         )
         script.chmod(0o700)
