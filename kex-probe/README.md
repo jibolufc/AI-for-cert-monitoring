@@ -57,6 +57,27 @@ event = RustKexProbe(SchemaRegistry(), "kex-probe/target/release/kex-probe").pro
 - `tools/kex_probe_smoke.py`: real binary through the adapter into an
   inventory record. CI runs all three.
 
-Cross-checked manually against OpenSSL 3.0 `s_server` for x25519 and
-secp384r1. The hybrid group has only been checked against rustls itself;
-checking it against an independent OpenSSL 3.5 server is still to do.
+### Independent OpenSSL cross-check (loopback lab)
+
+From the repository root, with the Python project installed and a tracing-capable
+OpenSSL 3.5+ CLI:
+
+```sh
+cargo build --manifest-path kex-probe/Cargo.toml --locked --release
+python tools/kex_probe_openssl.py kex-probe/target/release/kex-probe --expect-version 3.5.9
+python tools/kex_probe_smoke.py kex-probe/target/release/kex-probe
+```
+
+Use `--openssl /path/to/openssl` for a non-default binary. The cross-check uses
+an ephemeral synthetic certificate, forces TLS 1.3, and compares the OpenSSL
+ServerHello key-share code point with Rust's actual observation. It also checks
+that incompatible groups yield a fatal alert and no Rust observation.
+The OpenSSL cross-check is a separate lab command, not a default CI gate.
+
+The inventory smoke test exercises the Rust binary through the Python adapter
+and assessment. Assessment schema 1.2 adds `transport_key_exchange` and uses
+`pqc-exposure-v2`; the updated validator still accepts stored 1.1/v1 assessments.
+`exposure_status` and migration priority remain certificate-only. A single
+hybrid TLS observation with a classical leaf can therefore report both
+`hybrid-observed` for transport and `quantum-vulnerable` for the certificate.
+Neither establishes trusted-peer, deployment, or estate-wide readiness.

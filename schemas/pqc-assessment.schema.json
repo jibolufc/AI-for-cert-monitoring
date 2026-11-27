@@ -6,13 +6,25 @@
   "additionalProperties": false,
   "required": ["schema_version", "assessment_id", "record_id", "assessed_at", "method_version", "evidence_level", "exposure_status", "migration_priority", "findings", "missing_context", "limitations", "decision_authority"],
   "properties": {
-    "schema_version": {"const": "1.1"},
+    "schema_version": {"enum": ["1.1", "1.2"]},
     "assessment_id": {"type": "string", "format": "uuid"},
     "record_id": {"type": "string", "format": "uuid"},
     "assessed_at": {"type": "string", "format": "date-time"},
-    "method_version": {"const": "pqc-exposure-v1"},
+    "method_version": {"enum": ["pqc-exposure-v1", "pqc-exposure-v2"]},
     "evidence_level": {"enum": ["simulated", "generated", "public-observation", "sanitised-capture", "authenticated-production", "independently-verified"]},
     "exposure_status": {"enum": ["quantum-vulnerable", "candidate-quantum-resistant", "hybrid-unverified", "unknown"]},
+    "transport_key_exchange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "reported_group", "tls_version", "scope"],
+      "properties": {
+        "status": {"enum": ["hybrid-observed", "classical-observed", "unknown"]},
+        "reason": {"enum": ["not-observed", "failed-evidence", "unsupported-tls-version", "recognized-hybrid-group", "recognized-classical-group", "unsupported-group-for-version"]},
+        "reported_group": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+        "tls_version": {"type": ["string", "null"], "minLength": 1, "maxLength": 256},
+        "scope": {"const": "single-tls-observation"}
+      }
+    },
     "migration_priority": {"enum": ["high", "medium", "needs-context", "needs-evidence", "verify"]},
     "findings": {
       "type": "array", "minItems": 1,
@@ -31,5 +43,14 @@
     "missing_context": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "limitations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "decision_authority": {"const": "deterministic-advisory"}
+  },
+  "if": {"properties": {"schema_version": {"const": "1.2"}}},
+  "then": {
+    "required": ["transport_key_exchange"],
+    "properties": {"method_version": {"const": "pqc-exposure-v2"}}
+  },
+  "else": {
+    "not": {"required": ["transport_key_exchange"]},
+    "properties": {"method_version": {"const": "pqc-exposure-v1"}}
   }
 }

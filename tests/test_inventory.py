@@ -47,6 +47,29 @@ class PqcInventoryTests(unittest.TestCase):
             assessment["missing_context"],
         )
 
+    def test_certificate_without_transport_produces_unknown(self):
+        result = self.assess(event_payload())
+        self.assertEqual(result.assessment["transport_key_exchange"], {
+            "status": "unknown", "reason": "not-observed",
+            "reported_group": None, "tls_version": None,
+            "scope": "single-tls-observation",
+        })
+
+    def test_assessment_schema_accepts_legacy_and_rejects_mixed_versions(self):
+        new = self.assess(event_payload()).assessment
+        legacy = copy.deepcopy(new)
+        legacy.pop("transport_key_exchange")
+        with self.assertRaises(ValidationError):
+            self.schemas.validate("pqc-assessment", legacy)
+        legacy.update(schema_version="1.1", method_version="pqc-exposure-v1")
+        self.schemas.validate("pqc-assessment", legacy)
+        with self.assertRaises(ValidationError):
+            self.schemas.validate("pqc-assessment", {
+                **legacy, "transport_key_exchange": new["transport_key_exchange"],
+            })
+        with self.assertRaises(ValidationError):
+            self.schemas.validate("pqc-assessment", {**new, "method_version": "pqc-exposure-v1"})
+
     def test_unknown_algorithm_never_becomes_quantum_safe(self):
         payload = event_payload()
         payload["cryptography"]["public_key"] = {

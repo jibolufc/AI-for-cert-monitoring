@@ -17,12 +17,15 @@ from crypto_control_plane.inventory import PqcInventoryService
 from crypto_control_plane.models import CertificateEvent
 from crypto_control_plane.schema_validation import SchemaRegistry
 
-CASES = [("x25519mlkem768,x25519", "X25519MLKEM768"), ("x25519", "x25519")]
+CASES = [
+    ("x25519mlkem768,x25519", "X25519MLKEM768", "hybrid-observed"),
+    ("x25519", "x25519", "classical-observed"),
+]
 
 
 def main(binary: Path) -> int:
     schemas = SchemaRegistry()
-    for server_groups, expected in CASES:
+    for server_groups, expected, expected_status in CASES:
         server = subprocess.Popen(
             [str(binary), "serve", "--groups", server_groups, "--connections", "1"],
             stdout=subprocess.PIPE, text=True,
@@ -32,13 +35,17 @@ def main(binary: Path) -> int:
             event = RustKexProbe(schemas, binary).probe(
                 "127.0.0.1", port, observed_at="2026-10-16T12:00:00Z"
             )
-            record = PqcInventoryService(schemas).assess_certificate_event(
+            result = PqcInventoryService(schemas).assess_certificate_event(
                 CertificateEvent.from_dict(event)
-            ).record
-            observed = record["transport_observation"]["negotiated_key_establishment"]
-            print(f"server offers {server_groups:<22} -> recorded {observed}")
-            if observed != expected:
-                print(f"FAIL: expected {expected}", file=sys.stderr)
+            )
+            observed = result.record["transport_observation"]["negotiated_key_establishment"]
+            assessment = result.assessment
+            status = assessment["transport_key_exchange"]["status"]
+            print(f"server offers {server_groups:<22} -> {observed}: {status}")
+            if (observed != expected or status != expected_status
+                    or assessment["exposure_status"] != "quantum-vulnerable"):
+                print(f"FAIL: expected {expected}, {expected_status}, and classical X.509 exposure",
+                      file=sys.stderr)
                 return 1
             server.wait(timeout=5)
         finally:

@@ -26,6 +26,17 @@ from .schema_validation import SchemaRegistry
 
 MAX_CERTIFICATE_BYTES = 1_000_000
 
+# IANA TLS Supported Groups; the probe collapses its finite-field names to ffdhe.
+_PROBE_GROUP_IDS = {
+    "secp256r1": {23},
+    "secp384r1": {24},
+    "secp521r1": {25},
+    "x25519": {29},
+    "x448": {30},
+    "ffdhe": {256, 257, 258, 259, 260},
+    "X25519MLKEM768": {4588},
+}
+
 
 @dataclass(frozen=True)
 class GeneratedCertificate:
@@ -413,8 +424,12 @@ class RustKexProbe:
         transport = envelope["transport"]
         if transport["peer_host"] != host or transport["peer_port"] != port:
             raise ValidationError("kex probe reported a different peer than requested")
-        if transport["negotiated_key_establishment"] != envelope["key_establishment"]["group"]:
+        key_exchange = envelope["key_establishment"]
+        if transport["negotiated_key_establishment"] != key_exchange["group"]:
             raise ValidationError("kex probe transport and key-establishment group disagree")
+        known_ids = _PROBE_GROUP_IDS.get(key_exchange["group"])
+        if known_ids is not None and key_exchange["group_id"] not in known_ids:
+            raise ValidationError("kex probe group name and IANA code point disagree")
         try:
             certificate_der = base64.b64decode(envelope["peer_certificate_der_base64"], validate=True)
         except (binascii.Error, ValueError) as exc:

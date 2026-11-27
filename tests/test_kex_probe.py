@@ -116,10 +116,47 @@ class RustKexProbeAdapterTest(unittest.TestCase):
             assessed.record["transport_observation"]["negotiated_key_establishment"],
             "X25519MLKEM768",
         )
+        self.assertEqual(assessed.assessment["schema_version"], "1.2")
+        self.assertEqual(assessed.assessment["method_version"], "pqc-exposure-v2")
+        self.assertEqual(assessed.assessment["exposure_status"], "quantum-vulnerable")
+        self.assertIn("PQC-001", {f["rule_id"] for f in assessed.assessment["findings"]})
+        self.assertIn("PQC-002", {f["rule_id"] for f in assessed.assessment["findings"]})
+        self.assertEqual(assessed.assessment["evidence_level"], "generated")
+        self.assertEqual(assessed.assessment["transport_key_exchange"], {
+            "status": "hybrid-observed",
+            "reason": "recognized-hybrid-group",
+            "reported_group": "X25519MLKEM768",
+            "tls_version": "TLSv1.3",
+            "scope": "single-tls-observation",
+        })
 
     def test_classical_group_is_recorded_as_observed(self):
         _, event = self.run_probe(json.dumps(self.envelope("x25519", "elliptic-curve")))
         self.assertEqual(event["transport"]["negotiated_key_establishment"], "x25519")
+        result = PqcInventoryService(self.schemas).assess_certificate_event(
+            CertificateEvent.from_dict(event)
+        )
+        self.assertEqual(result.assessment["transport_key_exchange"]["status"], "classical-observed")
+
+    def test_uncertain_transport_never_becomes_hybrid(self):
+        _, event = self.run_probe(json.dumps(self.envelope()))
+        service = PqcInventoryService(self.schemas)
+        for group, version, verification, reason in (
+            (None, "TLSv1.3", "unverified", "not-observed"),
+            ("unrecognised", "TLSv1.3", "unverified", "unsupported-group-for-version"),
+            ("X25519MLKEM768", "TLSv1.2", "unverified", "unsupported-group-for-version"),
+            ("X25519MLKEM768", "unknown", "unverified", "unsupported-tls-version"),
+            ("X25519MLKEM768", "TLSv1.3", "failed", "failed-evidence"),
+        ):
+            with self.subTest(group=group, version=version, verification=verification):
+                event["transport"]["negotiated_key_establishment"] = group
+                event["transport"]["tls_version"] = version
+                event["provenance"]["verification_state"] = verification
+                assessment = service.assess_certificate_event(CertificateEvent.from_dict(event)).assessment
+                observed = assessment["transport_key_exchange"]
+                self.assertEqual((observed["status"], observed["reason"]), ("unknown", reason))
+                self.assertEqual(observed["reported_group"], group)
+                self.assertEqual(assessment["exposure_status"], "quantum-vulnerable")
 
     def test_non_loopback_target_is_rejected_before_the_binary_runs(self):
         fake = FakeProbe(self.tmp, json.dumps(self.envelope()))
@@ -140,6 +177,12 @@ class RustKexProbeAdapterTest(unittest.TestCase):
         envelope = self.envelope()
         envelope["key_establishment"]["group"] = "x25519"
         with self.assertRaisesRegex(ValidationError, "disagree"):
+            self.run_probe(json.dumps(envelope))
+
+    def test_group_name_and_numeric_code_point_must_agree(self):
+        envelope = self.envelope()
+        envelope["key_establishment"]["group_id"] = 29
+        with self.assertRaisesRegex(ValidationError, "IANA code point disagree"):
             self.run_probe(json.dumps(envelope))
 
     def test_unexpected_fields_and_groups_are_rejected_by_schema(self):
