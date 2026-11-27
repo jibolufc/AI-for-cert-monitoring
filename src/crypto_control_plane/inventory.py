@@ -10,6 +10,10 @@ from .schema_validation import SchemaRegistry
 
 QUANTUM_VULNERABLE = {"rsa", "elliptic-curve", "finite-field-dh", "dsa"}
 PQC_FAMILIES = {"ml-kem", "ml-dsa", "slh-dsa"}
+CLASSICAL_TLS_GROUPS = {
+    "x25519", "x448", "secp256r1", "secp384r1", "secp521r1", "ffdhe",
+    "ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144", "ffdhe8192",
+}
 
 
 @dataclass(frozen=True)
@@ -21,7 +25,7 @@ class InventoryAssessment:
 class PqcInventoryService:
     """Builds evidence records and deterministic, non-authoritative PQC assessments."""
 
-    method_version = "pqc-exposure-v1"
+    method_version = "pqc-exposure-v2"
 
     def __init__(self, schemas: SchemaRegistry):
         self.schemas = schemas
@@ -160,19 +164,47 @@ class PqcInventoryService:
         priority = _priority(exposure, record, missing)
         assessment_id = str(uuid5(NAMESPACE_URL, f"crypto-control-plane:assessment:{record['record_id']}:{self.method_version}"))
         return {
-            "schema_version": "1.1",
+            "schema_version": "1.2",
             "assessment_id": assessment_id,
             "record_id": record["record_id"],
             "assessed_at": record["observed_at"],
             "method_version": self.method_version,
             "evidence_level": record["evidence_level"],
             "exposure_status": exposure,
+            "transport_key_exchange": _transport_key_exchange(record),
             "migration_priority": priority,
             "findings": findings,
             "missing_context": missing,
             "limitations": list(record["coverage"]["limitations"]),
             "decision_authority": "deterministic-advisory",
         }
+
+
+def _transport_key_exchange(record: dict[str, Any]) -> dict[str, Any]:
+    """Classify a single reported negotiation, never certificate or estate readiness."""
+    transport = record["transport_observation"] or {}
+    group = transport.get("negotiated_key_establishment")
+    version = transport.get("tls_version")
+    status = "unknown"
+    if group is None:
+        reason = "not-observed"
+    elif record["evidence_confidence"] == "failed":
+        reason = "failed-evidence"
+    elif version not in {"TLSv1.2", "TLSv1.3"}:
+        reason = "unsupported-tls-version"
+    elif group == "X25519MLKEM768" and version == "TLSv1.3":
+        status, reason = "hybrid-observed", "recognized-hybrid-group"
+    elif group in CLASSICAL_TLS_GROUPS:
+        status, reason = "classical-observed", "recognized-classical-group"
+    else:
+        reason = "unsupported-group-for-version"
+    return {
+        "status": status,
+        "reason": reason,
+        "reported_group": group,
+        "tls_version": version,
+        "scope": "single-tls-observation",
+    }
 
 
 def _certificate_function(key_usage: tuple[str, ...]) -> str:
